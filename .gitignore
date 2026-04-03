@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+.env
+
+# Backend Cache & Databases
+backend/cache_data/
+backend/finmin_signals.db
+backend/finmin_history.db
+finmin_signals.db
+finmin_history.db
+backend/__pycache__/
+*.pyc
+
+# Local Environment
+.DS_Store
+.vscode/
+.idea/
+
+# Builds
+frontend/dist/
+frontend/build/
+
+# Vite
+*.local

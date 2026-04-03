@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+yfinance
+pandas
+pandas-ta
+requests
+feedparser
+textblob
+python-dotenv
+scikit-learn
+diskcache
+cachetools
+gunicorn

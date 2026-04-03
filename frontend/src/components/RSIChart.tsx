@@ -59,6 +59,12 @@ const RSIChart: React.FC<RSIChartProps> = ({ ticker }) => {
             type: 'custom',
             formatter: (price: number) => price.toFixed(1),
           },
+          autoscaleInfoProvider: () => ({
+            priceRange: {
+               minValue: 0,
+               maxValue: 100,
+            },
+          }),
         });
 
         // Add 70/30 horizontal lines
@@ -80,9 +86,9 @@ const RSIChart: React.FC<RSIChartProps> = ({ ticker }) => {
             title: 'Oversold',
         });
 
-        // Set y-axis range 0-100
+        // Use appropriate margins
         chart.priceScale('right').applyOptions({
-            autoScale: false,
+            autoScale: true,
             scaleMargins: {
                 top: 0.1,
                 bottom: 0.1,

@@ -26,3 +26,25 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #4b5563;
 }
+
+/* Global Compact Mode Overrides */
+.compact-mode table td, 
+.compact-mode table th {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  font-size: 0.75rem !important;
+}
+
+.compact-mode section,
+.compact-mode div.p-8 {
+  padding: 1.25rem !important;
+}
+
+.compact-mode h1,
+.compact-mode h2 {
+  font-size: 1.25rem !important;
+}
+
+.compact-mode .grid-cols-4 {
+  gap: 1rem !important;
+}

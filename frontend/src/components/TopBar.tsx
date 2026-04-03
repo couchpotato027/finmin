@@ -113,6 +113,56 @@ const TopBar: React.FC<TopBarProps> = ({ ticker, setTicker }) => {
     validateAndSubmit();
   };
 
+  const getMarketStatus = () => {
+    const now = new Date();
+    
+    // Indian Market (IST: UTC+5:30)
+    // Note: getUTCHours on an IST-offset date gives us the IST hour
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(now.getTime() + istOffset);
+    const istDay = istDate.getUTCDay(); // 0=Sun, 6=Sat
+    const istHours = istDate.getUTCHours();
+    const istMins = istDate.getUTCMinutes();
+    const istTime = istHours * 100 + istMins;
+    const istDateStr = istDate.toISOString().split('T')[0];
+    
+    // US Market (EST/EDT)
+    // 2026 DST: March 8 to Nov 1
+    const isDST = now >= new Date("2026-03-08") && now <= new Date("2026-11-01");
+    const estOffset = (isDST ? -4 : -5) * 60 * 60 * 1000;
+    const estDate = new Date(now.getTime() + estOffset);
+    const estDay = estDate.getUTCDay();
+    const estHours = estDate.getUTCHours();
+    const estMins = estDate.getUTCMinutes();
+    const estTime = estHours * 100 + estMins;
+    const estDateStr = estDate.toISOString().split('T')[0];
+
+    const indianHolidays = ["2026-01-26","2026-03-25","2026-04-06","2026-04-10","2026-04-14","2026-04-21","2026-05-01","2026-08-15","2026-10-02","2026-10-21","2026-10-23","2026-11-04","2026-11-05","2026-12-25"];
+    const usHolidays = ["2026-01-01","2026-01-19","2026-02-16","2026-04-03","2026-05-25","2026-07-03","2026-09-07","2026-11-26","2026-12-25"];
+
+    const isIndian = ticker.endsWith('.NS') || ticker.endsWith('.BO');
+    
+    if (isIndian) {
+      if (istDay === 0 || istDay === 6 || indianHolidays.includes(istDateStr)) 
+        return { label: "NSE CLOSED", color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20", pulse: false };
+      if (istTime >= 915 && istTime < 1530) 
+        return { label: "NSE OPEN", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", pulse: true };
+      if (istTime >= 900 && istTime < 915) 
+        return { label: "NSE PRE-OPEN", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", pulse: false };
+      return { label: "NSE CLOSED", color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20", pulse: false };
+    } else {
+      if (estDay === 0 || estDay === 6 || usHolidays.includes(estDateStr)) 
+        return { label: "NYSE CLOSED", color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20", pulse: false };
+      if (estTime >= 930 && estTime < 1600) 
+        return { label: "NYSE OPEN", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", pulse: true };
+      if (estTime >= 400 && estTime < 930) 
+        return { label: "NYSE PRE-MARKET", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", pulse: false };
+      return { label: "NYSE CLOSED", color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20", pulse: false };
+    }
+  };
+
+  const market = getMarketStatus();
+
   return (
     <header className="h-16 bg-[#0b0f19]/80 backdrop-blur-md border-b border-[#1f2937] flex items-center justify-between px-8 z-50 sticky top-0">
       <div className="relative w-96" ref={dropdownRef}>
@@ -165,9 +215,9 @@ const TopBar: React.FC<TopBarProps> = ({ ticker, setTicker }) => {
       </div>
 
       <div className="flex items-center space-x-6">
-        <div className="flex items-center bg-[#111827] px-3 py-1.5 rounded-full border border-[#1f2937]">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shadow-[0_0_8px_#10b981]" />
-          <span className="text-xs font-semibold tracking-wide text-gray-300">MARKET OPEN</span>
+        <div className={`flex items-center ${market.bg} ${market.border} border px-3 py-1.5 rounded-full transition-all duration-500`}>
+          <div className={`w-2 h-2 rounded-full ${market.pulse ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-gray-500'} mr-2`} />
+          <span className={`text-[10px] font-black tracking-widest uppercase ${market.color}`}>{market.label}</span>
         </div>
 
         <div className="w-9 h-9 rounded-full border border-[#1f2937] bg-[#111827] flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer">

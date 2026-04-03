@@ -115,6 +115,33 @@ const MACDChart: React.FC<MACDChartProps> = ({ ticker }) => {
         signalLineSeries.setData(signalData);
         histogramSeries.setData(histData);
         
+        // Dynamic auto-scale for MACD
+        const allValues = [
+            ...macdData.map(d => d.value),
+            ...signalData.map(d => d.value),
+            ...histData.map(d => d.value)
+        ].filter(v => v !== null && !isNaN(v));
+        
+        if (allValues.length > 0) {
+            const maxVal = Math.max(...allValues);
+            const minVal = Math.min(...allValues);
+            const range = maxVal - minVal;
+            const margin = range * 0.15; // 15% margin
+            
+            macdLineSeries.applyOptions({
+                autoscaleInfoProvider: () => ({
+                    priceRange: {
+                        minValue: minVal - margin,
+                        maxValue: maxVal + margin,
+                    },
+                }),
+            });
+            
+            chart.priceScale('right').applyOptions({
+                autoScale: true,
+            });
+        }
+        
         chart.timeScale().fitContent();
 
       } catch (error) {
