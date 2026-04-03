@@ -10,8 +10,4 @@ services:
       - key: PYTHON_VERSION
         value: 3.10.0
       - key: DATABASE_URL
-        value: /data/finmin_signals.db
-    disk:
-      name: finmin-data
-      mountPath: /data
-      sizeGB: 1
+        value: postgresql://postgres:[YOUR-PASSWORD]@db.cntldsboatukfeqlfrjk.supabase.co:5432/postgres

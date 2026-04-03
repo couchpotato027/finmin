@@ -34,11 +34,9 @@ async def run_evaluation_periodically():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Determine DB path (Use /data on Render for persistence)
+    # Initialize DB (Local persistence only on free tier)
     is_render = os.getenv("RENDER") is not None
-    db_path = "/data/finmin_signals.db" if is_render else "finmin_signals.db"
     
-    # Initialize DB (Simple logic for now)
     init_db()
     migrate_timestamps_to_utc()
     
@@ -72,9 +70,10 @@ def trigger_evaluation():
 
 @app.delete("/api/signals/clear")
 def clear_signals():
-    import sqlite3
-    conn = sqlite3.connect("finmin_signals.db")
-    conn.execute("DELETE FROM signals")
+    from history import get_connection
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM signals")
     conn.commit()
     conn.close()
     return {"success": True, "message": "Signal history cleared"}

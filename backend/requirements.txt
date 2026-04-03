@@ -11,3 +11,4 @@ scikit-learn
 diskcache
 cachetools
 gunicorn
+psycopg2-binary

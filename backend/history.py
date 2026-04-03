@@ -1,26 +1,59 @@
 import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import os
 import datetime
 import yfinance as yf
 import logging
 
+# Configuration
 DB_PATH = "finmin_signals.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+def get_connection():
+    """Returns a connection based on environment (Postgres for production, SQLite for local)."""
+    if DATABASE_URL:
+        # Use PostgreSQL (Supabase)
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    else:
+        # Use SQLite (Local)
+        return sqlite3.connect(DB_PATH)
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS signals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ticker TEXT NOT NULL,
-            signal TEXT NOT NULL,
-            score INTEGER NOT NULL,
-            price_at_signal REAL NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            outcome TEXT,
-            price_at_outcome REAL,
-            pct_change REAL
-        )
-    ''')
+    
+    if DATABASE_URL:
+        # PostgreSQL syntax
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS signals (
+                id SERIAL PRIMARY KEY,
+                ticker TEXT NOT NULL,
+                signal TEXT NOT NULL,
+                score INTEGER NOT NULL,
+                price_at_signal REAL NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                outcome TEXT,
+                price_at_outcome REAL,
+                pct_change REAL
+            )
+        ''')
+    else:
+        # SQLite syntax
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS signals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticker TEXT NOT NULL,
+                signal TEXT NOT NULL,
+                score INTEGER NOT NULL,
+                price_at_signal REAL NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                outcome TEXT,
+                price_at_outcome REAL,
+                pct_change REAL
+            )
+        ''')
     conn.commit()
     conn.close()
     logging.info("Database initialized")
@@ -29,72 +62,76 @@ def log_signal(ticker, signal, score, price):
     if signal not in ["BUY", "SELL"]:
         return
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     
-    # Check for existing open signal for this ticker in the last 24 hours
-    cursor.execute("""
-        SELECT id FROM signals 
-        WHERE ticker = ? AND outcome IS NULL 
-        AND timestamp > datetime('now', '-24 hours')
-    """, (ticker,))
+    # Param placeholder (%s for Postgres, ? for SQLite)
+    p = "%s" if DATABASE_URL else "?"
+    
+    # Check for existing open signal in the last 24 hours
+    # Different interval syntax for PG vs SQLite
+    if DATABASE_URL:
+        interval_sql = "timestamp > NOW() - INTERVAL '24 hours'"
+    else:
+        interval_sql = "timestamp > datetime('now', '-24 hours')"
+        
+    cursor.execute(f"SELECT id FROM signals WHERE ticker = {p} AND outcome IS NULL AND {interval_sql}", (ticker,))
     if cursor.fetchone():
         conn.close()
         return
 
     utc_now = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute('''
+    cursor.execute(f'''
         INSERT INTO signals (ticker, signal, score, price_at_signal, timestamp)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES ({p}, {p}, {p}, {p}, {p})
     ''', (ticker, signal, score, price, utc_now))
     
     conn.commit()
     conn.close()
-    logging.info(f"Logged {signal} signal for {ticker} at {utc_now} UTC")
+    logging.info(f"Logged {signal} signal for {ticker}")
 
 def evaluate_outcomes():
     logging.info("Evaluating pending signals older than 5 days...")
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     
-    # 1. Finds signals where outcome IS NULL and timestamp <= datetime('now', '-5 days')
-    cursor.execute("""
+    p = "%s" if DATABASE_URL else "?"
+    
+    # Different interval syntax
+    if DATABASE_URL:
+        interval_sql = "timestamp <= NOW() - INTERVAL '5 days'"
+    else:
+        interval_sql = "timestamp <= datetime('now', '-5 days')"
+        
+    cursor.execute(f"""
         SELECT id, ticker, signal, price_at_signal 
         FROM signals 
         WHERE outcome IS NULL 
-        AND timestamp <= datetime('now', '-5 days')
+        AND {interval_sql}
     """)
     pending = cursor.fetchall()
     
     for row_id, ticker, signal, price_at_signal in pending:
         try:
-            # 2. Fetches current price using yfinance for each
             t = yf.Ticker(ticker)
-            # Use period="5d" to get at least 5 days of data
             hist = t.history(period="5d", interval="1d")
             
             if not hist.empty:
-                # Use the most recent closing price as the outcome price
                 current_price = float(hist['Close'].iloc[-1])
-                
-                # 3. Calculates pct_change from price_at_signal
                 pct = round((current_price - price_at_signal) / price_at_signal * 100, 2)
                 
-                # 4. Sets outcome = 'WIN' or 'LOSS'
                 if signal == 'BUY':
                     outcome = 'WIN' if current_price > price_at_signal else 'LOSS'
                 elif signal == 'SELL':
                     outcome = 'WIN' if current_price < price_at_signal else 'LOSS'
-                else:
-                    continue # Should not happen
-
-                # 5. Updates price_at_outcome and pct_change in DB
-                cursor.execute('''
+                else: continue
+                
+                cursor.execute(f'''
                     UPDATE signals SET 
-                        outcome = ?,
-                        price_at_outcome = ?,
-                        pct_change = ?
-                    WHERE id = ?
+                        outcome = {p},
+                        price_at_outcome = {p},
+                        pct_change = {p}
+                    WHERE id = {p}
                 ''', (outcome, current_price, pct, row_id))
                 logging.info(f"Evaluated {ticker}: {outcome} ({pct}%)")
             
@@ -105,72 +142,78 @@ def evaluate_outcomes():
     conn.close()
 
 def migrate_timestamps_to_utc():
-    logging.info("Checking for timestamp migration to UTC...")
-    conn = sqlite3.connect(DB_PATH)
+    # This is a legacy helper for local SQLite migration, 
+    # but we'll adapt it to be safe for both.
+    if DATABASE_URL: return # Postgres handles time zones better natively
+
+    conn = sqlite3.connect(DB_PATH) # Hardcoded sqlite because this is a local fix
     cursor = conn.cursor()
-    
-    # Check if migration already done (finding signals where outcome IS NULL)
     cursor.execute("SELECT COUNT(*) FROM signals WHERE outcome IS NULL")
     pending = cursor.fetchone()[0]
-    
     if pending > 0:
-        # Subtract 5.5 hours (5h 30m) from all NULL outcome signals (assumed IST)
-        cursor.execute("""
-            UPDATE signals 
-            SET timestamp = datetime(timestamp, '-5 hours', '-30 minutes')
-            WHERE outcome IS NULL
-        """)
+        cursor.execute("UPDATE signals SET timestamp = datetime(timestamp, '-5 hours', '-30 minutes') WHERE outcome IS NULL")
         conn.commit()
-        logging.info(f"Migrated {pending} timestamps to UTC")
-    
     conn.close()
 
-
 def get_win_rate():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     
-    thirty_days_ago = (datetime.datetime.utcnow() - datetime.timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Total signals (including pending) in last 30 days
-    cursor.execute("SELECT COUNT(*) FROM signals WHERE timestamp > ?", (thirty_days_ago,))
+    # PostgreSQL vs SQLite for '30 days ago'
+    if DATABASE_URL:
+        cutoff_sql = "NOW() - INTERVAL '30 days'"
+    else:
+        cutoff_sql = "(datetime('now', '-30 days'))"
+        
+    # Total signals
+    cursor.execute(f"SELECT COUNT(*) FROM signals WHERE timestamp > {cutoff_sql}")
     total_all = cursor.fetchone()[0]
     
-    # Total evaluated signals in last 30 days
-    cursor.execute("SELECT COUNT(*) FROM signals WHERE outcome IS NOT NULL AND timestamp > ?", (thirty_days_ago,))
+    # Total evaluated
+    cursor.execute(f"SELECT COUNT(*) FROM signals WHERE outcome IS NOT NULL AND timestamp > {cutoff_sql}")
     total_evaluated = cursor.fetchone()[0]
     
-    # Total wins in last 30 days
-    cursor.execute("SELECT COUNT(*) FROM signals WHERE outcome = 'WIN' AND timestamp > ?", (thirty_days_ago,))
+    # Total wins
+    cursor.execute(f"SELECT COUNT(*) FROM signals WHERE outcome = 'WIN' AND timestamp > {cutoff_sql}")
     wins = cursor.fetchone()[0]
     
     win_rate = round(wins / total_evaluated * 100) if total_evaluated > 0 else 0
     
-    # Avg Gain on WINs
-    cursor.execute("SELECT AVG(pct_change) FROM signals WHERE outcome = 'WIN' AND timestamp > ?", (thirty_days_ago,))
+    # Avg Gain
+    cursor.execute(f"SELECT AVG(pct_change) FROM signals WHERE outcome = 'WIN' AND timestamp > {cutoff_sql}")
     avg_gain = cursor.fetchone()[0] or 0
     
-    # Avg Loss on LOSSes
-    cursor.execute("SELECT AVG(pct_change) FROM signals WHERE outcome = 'LOSS' AND timestamp > ?", (thirty_days_ago,))
+    # Avg Loss
+    cursor.execute(f"SELECT AVG(pct_change) FROM signals WHERE outcome = 'LOSS' AND timestamp > {cutoff_sql}")
     avg_loss = cursor.fetchone()[0] or 0
     
     conn.close()
     
     return {
         "win_rate": int(win_rate),
-        "total": total_all,
-        "evaluated": total_evaluated,
-        "wins": wins,
-        "avg_gain": round(avg_gain, 2),
-        "avg_loss": round(avg_loss, 2)
+        "total": int(total_all or 0),
+        "evaluated": int(total_evaluated or 0),
+        "wins": int(wins or 0),
+        "avg_gain": round(float(avg_gain), 2),
+        "avg_loss": round(float(avg_loss), 2)
     }
 
 def get_recent_signals(limit=50):
-    conn = sqlite3.connect(DB_PATH)
-    # Return as list of dicts for easy API usage
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM signals ORDER BY timestamp DESC LIMIT ?", (limit,))
-    rows = cursor.fetchall()
+    conn = get_connection()
+    
+    if DATABASE_URL:
+        # Postgres fetch as dicts
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT * FROM signals ORDER BY timestamp DESC LIMIT %s", (limit,))
+        rows = cursor.fetchall()
+        results = [dict(row) for row in rows]
+    else:
+        # SQLite fetch as dicts
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM signals ORDER BY timestamp DESC LIMIT ?", (limit,))
+        rows = cursor.fetchall()
+        results = [dict(row) for row in rows]
+        
     conn.close()
-    return [dict(row) for row in rows]
+    return results
