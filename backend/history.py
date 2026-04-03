@@ -13,8 +13,12 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 def get_connection():
     """Returns a connection based on environment (Postgres for production, SQLite for local)."""
     if DATABASE_URL:
+        # CLEANUP: Remove accidental brackets if user kept them in Render settings
+        # e.g., postgres:[mypassword]@host -> postgres:mypassword@host
+        clean_url = DATABASE_URL.strip().replace(":[", ":").replace("]@", "@")
+        
         # Use PostgreSQL (Supabase)
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(clean_url)
         return conn
     else:
         # Use SQLite (Local)
