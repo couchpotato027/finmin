@@ -1,4 +1,6 @@
 import yfinance as yf
+import os
+from dotenv import load_dotenv
 yf.set_tz_cache_location("/tmp/yfinance_cache")
 import pandas as pd
 import pandas_ta as ta
