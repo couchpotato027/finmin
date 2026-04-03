@@ -36,22 +36,20 @@ async def run_evaluation_periodically():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize DB (Local persistence only on free tier)
-    is_render = os.getenv("RENDER") is not None
-    
+    # Initialize DB (Always fast)
     init_db()
     migrate_timestamps_to_utc()
     
-    try:
-        evaluate_outcomes()
-        print(f"Startup evaluation completed (Environment: {'Render' if is_render else 'Local'})")
-    except Exception as e:
-        print(f"Startup evaluation error: {e}")
-        
-    # Start background task
-    task = asyncio.create_task(run_evaluation_periodically())
+    # Start background tasks AFTER yield (when server is already live)
+    # This prevents Render from timing out during startup
+    eval_task = asyncio.create_task(run_evaluation_periodically())
+    
+    # Also run one evaluation in the background right now
+    asyncio.create_task(asyncio.to_thread(evaluate_outcomes))
+    
+    print(f"Server started successfully (Environment: {'Render' if os.getenv('RENDER') else 'Local'})")
     yield
-    task.cancel()
+    eval_task.cancel()
 
 app = FastAPI(title="FinMin API", lifespan=lifespan)
 
