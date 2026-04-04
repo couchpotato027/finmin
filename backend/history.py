@@ -208,22 +208,29 @@ def get_win_rate():
         "avg_loss": round(float(avg_loss), 2)
     }
 
-def get_recent_signals(limit=50):
-    conn = get_connection()
-    
-    if DATABASE_URL:
-        # Postgres fetch as dicts
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT * FROM signals ORDER BY timestamp DESC LIMIT %s", (limit,))
-        rows = cursor.fetchall()
-        results = [dict(row) for row in rows]
-    else:
-        # SQLite fetch as dicts
-        conn.row_factory = sqlite3.Row
+def get_recent_signals(limit: int = 50) -> List[Dict[str, Any]]:
+    """Returns the most recent signals from the database."""
+    try:
+        conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM signals ORDER BY timestamp DESC LIMIT ?", (limit,))
-        rows = cursor.fetchall()
-        results = [dict(row) for row in rows]
         
-    conn.close()
-    return results
+        # Cross-compatible query
+        p = "%s" if DATABASE_URL else "?"
+        cursor.execute(f'''
+            SELECT ticker, signal, score, price_at_signal, timestamp, outcome, pct_change 
+            FROM signals 
+            ORDER BY timestamp DESC 
+            LIMIT {p}
+        ''', (limit,))
+        
+        columns = [col[0] for col in cursor.description]
+        results = []
+        for row in cursor.fetchall():
+            results.append(dict(zip(columns, row)))
+            
+        cursor.close()
+        conn.close()
+        return results
+    except Exception as e:
+        logging.error(f"Error fetching signals: {e}")
+        return []
