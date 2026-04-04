@@ -95,7 +95,12 @@ const RSIChart: React.FC<RSIChartProps> = ({ ticker }) => {
             },
         });
 
-        const rsiData = indicators.rsi.map(item => ({
+        if (!indicators || !indicators.rsi || !Array.isArray(indicators.rsi)) {
+          console.warn("Invalid RSI data:", indicators);
+          return;
+        }
+
+        const rsiData = indicators.rsi.map((item: any) => ({
           time: item.time as Time,
           value: item.value,
         }));

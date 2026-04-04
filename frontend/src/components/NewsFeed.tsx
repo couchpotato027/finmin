@@ -86,7 +86,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ ticker }) => {
     );
   }
 
-  if (!data || data.articles.length === 0) {
+  if (!data || !data.articles || data.articles.length === 0) {
     return (
       <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] shadow-lg rounded-xl p-6 h-full flex flex-col items-center justify-center text-center">
         <div className="w-12 h-12 bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
