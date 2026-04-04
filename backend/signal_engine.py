@@ -1,6 +1,3 @@
-import pandas as pd
-import pandas_ta as ta
-import yfinance as yf
 from cache_config import info_cache, history_cache
 
 SECTOR_INDICES = {
@@ -17,6 +14,7 @@ SECTOR_INDICES = {
 
 def get_sector_info(ticker: str) -> dict:
     """ Fetches and caches sector/industry info using persistent disk cache. """
+    import yfinance as yf
     cache_key = f"info_{ticker.upper()}"
     if cache_key in info_cache:
         info = info_cache[cache_key]
@@ -83,7 +81,11 @@ def get_market_breadth() -> float:
     pass
   return 0.0
 
-def generate_signal(df: pd.DataFrame, ticker: str = ""):
+def generate_signal(df: any, ticker: str = "") -> dict:
+    """ Generates a trade signal (+/-, score, confidence) with reasons. """
+    import pandas as pd
+    import pandas_ta as ta
+    
     """
     Analyzes historical price data to generate a weighted composite trading signal.
     Score: -100 to +100

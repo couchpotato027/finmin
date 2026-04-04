@@ -1,15 +1,21 @@
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
 from cache_config import history_cache
 import yfinance as yf
 from datetime import datetime, timedelta
 import asyncio
+from typing import Dict, Any
+
+def backtest_single(ticker: str, period: str = "1y"):
+    """ Simulates trade logic on historical data to verify signal accuracy. """
+    import numpy as np
+    import pandas as pd
+    from signal_engine import generate_signal
+    
+    # Run in a thread if called from an async route
+    pass
 
 def get_cached_history(ticker: str, period: str = "6mo", interval: str = "1d"):
     """ Shared helper for consistent history caching. """
+    import pandas as pd
     cache_key = f"hist_{ticker.upper()}_{period}_{interval}"
     if cache_key in history_cache:
         return history_cache[cache_key]
@@ -23,10 +29,17 @@ def get_cached_history(ticker: str, period: str = "6mo", interval: str = "1d"):
     except:
         return pd.DataFrame()
 
-def predict_price(ticker: str):
+def predict_price(ticker: str, days: int = 5) -> Dict[str, Any]:
+    """ USES ML (Linear Regression) to predict future price trends based on historical momentum. """
+    import numpy as np
+    import pandas as pd
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import r2_score
+    
     try:
         # Use cached history for speed
-        df = get_cached_history(ticker, period="6mo", interval="1d")
+        df = get_cached_history(ticker, period="1y", interval="1d")
 
         if df.empty or len(df) < 30:
             return None

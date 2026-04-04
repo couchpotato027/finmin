@@ -2,8 +2,6 @@ import yfinance as yf
 import os
 from dotenv import load_dotenv
 yf.set_tz_cache_location("/tmp/yfinance_cache")
-import pandas as pd
-import pandas_ta as ta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import json
@@ -177,6 +175,7 @@ def get_cached_history(ticker: str, period: str, interval: str):
             history_cache[cache_key] = df
         return df
     except Exception as e:
+        import pandas as pd
         print(f"Error fetching history for {ticker}: {e}")
         return pd.DataFrame()
 
@@ -235,6 +234,9 @@ async def get_technical_indicators(ticker: str, period: str = "1y") -> Dict[str,
     Calculates RSI, MACD, etc. with async/cached execution.
     """
     df = await asyncio.to_thread(get_cached_history, ticker, period, "1d")
+    
+    import pandas as pd
+    import pandas_ta as ta
     
     if df.empty or len(df) < 200:
         return {"error": "Not enough data to calculate all indicators (need 200 days)."}
@@ -524,6 +526,7 @@ def market_scan() -> List[Dict[str, Any]]:
     Scans a pre-defined list of popular stocks for trading opportunities 
     using the centralized signal engine.
     """
+    import pandas as pd
     tickers = [
         "AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "GOOGL", "META", "NFLX", 
         "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "ICICIBANK.NS", "PAYTM.NS"

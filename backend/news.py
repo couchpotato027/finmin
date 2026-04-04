@@ -2,7 +2,6 @@ import feedparser
 import requests
 import os
 import urllib.parse
-from textblob import TextBlob
 from datetime import datetime, timezone
 import time
 from dotenv import load_dotenv
@@ -47,9 +46,18 @@ def time_ago(pub_timestamp):
     except:
         return "recent"
 
+def get_sentiment(text: str) -> float:
+    """ Evaluates sentiment polarity [-1 to +1] using TextBlob. """
+    if not text: return 0.0
+    from textblob import TextBlob
+    try:
+        blob = TextBlob(text)
+        return blob.sentiment.polarity
+    except:
+        return 0.0
+
 def analyze_sentiment(text):
-    blob = TextBlob(text)
-    score = blob.sentiment.polarity
+    score = get_sentiment(text)
     
     positive_words = ["beat","surge","rally","profit","growth",
         "upgrade","record","strong","buy","outperform","dividend",
