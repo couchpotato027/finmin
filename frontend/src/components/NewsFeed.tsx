@@ -37,10 +37,11 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ ticker }) => {
       if (!ticker) return;
       setLoading(true);
       try {
+        const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000';
         // Fetch news and signal in parallel
         const [newsRes, signalRes] = await Promise.all([
-          fetch(`http://localhost:8000/api/news/${ticker}`),
-          fetch(`http://localhost:8000/api/signal/${ticker}`)
+          fetch(`${API_BASE_URL}/api/news/${ticker}`),
+          fetch(`${API_BASE_URL}/api/signal/${ticker}`)
         ]);
         
         const newsJson = await newsRes.json();

@@ -1,6 +1,7 @@
 import yfinance as yf
 import os
 from dotenv import load_dotenv
+from yf_session import get_yf_session
 yf.set_tz_cache_location("/tmp/yfinance_cache")
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -140,7 +141,7 @@ def get_cached_info(ticker: str):
         return info_cache[cache_key]
     
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker, session=get_yf_session())
         # Fetching only essential fields to minimize yfinance overhead
         info = stock.info
         info_cache.set(cache_key, info, expire=604800) # 7 days
@@ -158,7 +159,7 @@ def get_cached_history(ticker: str, period: str, interval: str):
         return history_cache[cache_key]
     
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker, session=get_yf_session())
         df = stock.history(period=period, interval=interval)
         if not df.empty:
             history_cache[cache_key] = df
@@ -283,7 +284,7 @@ def get_price(ticker: str):
     3. history (Definitive fallback)
     """
     try:
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(ticker, session=get_yf_session())
         price = None
         prev_close = None
         
@@ -344,12 +345,13 @@ def get_price(ticker: str):
 @app.get("/api/exchangerate")
 def get_exchange_rate():
     try:
-        t = yf.Ticker("USDINR=X")
-        info = t.info
-        rate = info.get("regularMarketPrice") or \
-               info.get("previousClose") or 84.0
-        return {"rate": round(float(rate), 2), 
-                "base": "USD", "target": "INR"}
+        t = yf.Ticker("USDINR=X", session=get_yf_session())
+        df = t.history(period="1d")
+        if not df.empty:
+            rate = df['Close'].iloc[-1]
+            return {"rate": round(float(rate), 2), 
+                    "base": "USD", "target": "INR"}
+        return {"rate": 84.0, "base": "USD", "target": "INR"}
     except:
         return {"rate": 84.0, "base": "USD", "target": "INR"}
 
@@ -364,7 +366,7 @@ def get_ai_signal(ticker: str) -> Dict[str, Any]:
     Works for any ticker string passed.
     """
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker, session=get_yf_session())
         df = stock.history(period="3mo", interval="1d")
         
         if df.empty:
@@ -524,7 +526,7 @@ def market_scan() -> List[Dict[str, Any]]:
     
     for ticker in tickers:
         try:
-            stock = yf.Ticker(ticker)
+            stock = yf.Ticker(ticker, session=get_yf_session())
             df = stock.history(period="3mo", interval="1d")
             
             if df.empty or len(df) < 30:

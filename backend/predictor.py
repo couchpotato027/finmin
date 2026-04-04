@@ -1,3 +1,4 @@
+from yf_session import get_yf_session
 from cache_config import history_cache
 import yfinance as yf
 from datetime import datetime, timedelta
@@ -21,7 +22,7 @@ def get_cached_history(ticker: str, period: str = "6mo", interval: str = "1d"):
         return history_cache[cache_key]
     
     try:
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(ticker, session=get_yf_session())
         df = t.history(period=period, interval=interval)
         if not df.empty:
             history_cache[cache_key] = df

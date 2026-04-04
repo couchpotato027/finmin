@@ -1,3 +1,4 @@
+from yf_session import get_yf_session
 import os
 import datetime
 import logging
@@ -125,7 +126,7 @@ def evaluate_outcomes():
     
     for row_id, ticker, signal, price_at_signal in pending:
         try:
-            t = yf.Ticker(ticker)
+            t = yf.Ticker(ticker, session=get_yf_session())
             hist = t.history(period="5d", interval="1d")
             
             if not hist.empty:
