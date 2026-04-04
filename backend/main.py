@@ -37,8 +37,12 @@ async def run_evaluation_periodically():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize DB (Always fast)
-    init_db()
-    migrate_timestamps_to_utc()
+    try:
+        init_db()
+        migrate_timestamps_to_utc()
+    except Exception as e:
+        print(f"DATABASE INITIALIZATION FAILED: {e}")
+        # Note: We let the app continue so the port binds and 502/Bad Gateway is avoided.
     
     # Start background tasks AFTER yield (when server is already live)
     # This prevents Render from timing out during startup
@@ -52,6 +56,15 @@ async def lifespan(app: FastAPI):
     eval_task.cancel()
 
 app = FastAPI(title="FinMin API", lifespan=lifespan)
+
+
+@app.get("/api/health")
+def health_check():
+    return {
+        "status": "online",
+        "environment": "Render" if os.getenv("RENDER") else "Local",
+        "database": "postgresql" if os.getenv("DATABASE_URL") else "sqlite"
+    }
 
 
 # Enable CORS for frontend requests

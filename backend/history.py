@@ -17,11 +17,17 @@ def get_connection():
         # e.g., postgres:[mypassword]@host -> postgres:mypassword@host
         clean_url = DATABASE_URL.strip().replace(":[", ":").replace("]@", "@")
         
-        # Use PostgreSQL (Supabase)
-        conn = psycopg2.connect(clean_url)
-        return conn
+        try:
+            logging.info(f"Connecting to production database (Supabase)...")
+            conn = psycopg2.connect(clean_url, connect_timeout=10)
+            logging.info("Successfully connected to the production database.")
+            return conn
+        except Exception as e:
+            logging.error(f"FATAL: Database connection failed: {e}")
+            raise e
     else:
         # Use SQLite (Local)
+        logging.info("Using local SQLite database.")
         return sqlite3.connect(DB_PATH)
 
 def init_db():
