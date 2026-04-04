@@ -129,15 +129,7 @@ def search_tickers(q: str = "") -> List[Dict[str, str]]:
         print(f"Error fetching search results: {e}")
         return []
 
-@app.get("/stock/{ticker}/price")
-def get_price_history(ticker: str, period: str = "1mo") -> Dict[str, Any]:
-    """
-    Returns historical OHLCV data formatted for TradingView Lightweight Charts,
-    along with currency information and current_price.
-    """
-    stock = yf.Ticker(ticker)
-    
-    # Map timeframe to yfinance period/interval
+
 def get_cached_info(ticker: str):
     """
     Fetch and cache ticker metadata (info) which is slow and static.
