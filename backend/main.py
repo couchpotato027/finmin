@@ -43,11 +43,8 @@ async def lifespan(app: FastAPI):
         # Note: We let the app continue so the port binds and 502/Bad Gateway is avoided.
     
     # Start background tasks AFTER yield (when server is already live)
-    # This prevents Render from timing out during startup
+    # This (run_evaluation_periodically) already includes a delay/interval.
     eval_task = asyncio.create_task(run_evaluation_periodically())
-    
-    # Also run one evaluation in the background right now
-    asyncio.create_task(asyncio.to_thread(evaluate_outcomes))
     
     print(f"Server started successfully (Environment: {'Render' if os.getenv('RENDER') else 'Local'})")
     yield

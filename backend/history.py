@@ -1,9 +1,5 @@
-import sqlite3
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import os
 import datetime
-import yfinance as yf
 import logging
 
 # Configuration
@@ -13,6 +9,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 def get_connection():
     """Returns a connection based on environment (Postgres for production, SQLite for local)."""
     if DATABASE_URL:
+        import psycopg2
         # CLEANUP: Remove accidental brackets if user kept them in Render settings
         # e.g., postgres:[mypassword]@host -> postgres:mypassword@host
         clean_url = DATABASE_URL.strip().replace(":[", ":").replace("]@", "@")
@@ -27,6 +24,7 @@ def get_connection():
             raise e
     else:
         # Use SQLite (Local)
+        import sqlite3
         logging.info("Using local SQLite database.")
         return sqlite3.connect(DB_PATH)
 
@@ -101,7 +99,10 @@ def log_signal(ticker, signal, score, price):
     logging.info(f"Logged {signal} signal for {ticker}")
 
 def evaluate_outcomes():
-    logging.info("Evaluating pending signals older than 5 days...")
+    """ Periodically evaluates the status of pending signals (WIN/LOSS). """
+    import yfinance as yf
+    import time
+    
     conn = get_connection()
     cursor = conn.cursor()
     
