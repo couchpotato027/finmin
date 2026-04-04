@@ -1,6 +1,7 @@
 import os
 import datetime
 import logging
+from typing import List, Dict, Any
 
 # Configuration
 DB_PATH = "finmin_signals.db"
@@ -157,6 +158,7 @@ def migrate_timestamps_to_utc():
     # but we'll adapt it to be safe for both.
     if DATABASE_URL: return # Postgres handles time zones better natively
 
+    import sqlite3
     conn = sqlite3.connect(DB_PATH) # Hardcoded sqlite because this is a local fix
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM signals WHERE outcome IS NULL")
