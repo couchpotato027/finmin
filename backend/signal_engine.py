@@ -22,7 +22,7 @@ def get_sector_info(ticker: str) -> dict:
         return {"sector": info.get('sector', 'Other'), "industry": info.get('industry', '')}
     
     try:
-        t = yf.Ticker(ticker, session=get_yf_session())
+        t = yf.Ticker(ticker)
         info = t.info
         info_cache.set(cache_key, info, expire=604800) # 7 days
         return {"sector": info.get('sector', 'Other'), "industry": info.get('industry', '')}
@@ -40,7 +40,7 @@ def get_cached_history(ticker: str, period: str = "2d", interval: str = "1d"):
         return history_cache[cache_key]
     
     try:
-        t = yf.Ticker(ticker, session=get_yf_session())
+        t = yf.Ticker(ticker)
         df = t.history(period=period, interval=interval)
         if not df.empty:
             history_cache[cache_key] = df

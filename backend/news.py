@@ -137,12 +137,12 @@ def get_news(ticker: str, limit: int = 8):
             s = Search(TICKER_SEARCH_OVERRIDE[ticker], max_results=1)
             if s.quotes:
                 alt = s.quotes[0].get('symbol', ticker)
-                t_obj = yf.Ticker(alt, session=get_yf_session())
+                t_obj = yf.Ticker(alt)
         except:
             pass
     
     if not t_obj:
-        t_obj = yf.Ticker(ticker, session=get_yf_session())
+        t_obj = yf.Ticker(ticker)
 
     try:
         raw_news = t_obj.news

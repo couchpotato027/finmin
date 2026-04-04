@@ -22,7 +22,7 @@ def get_cached_history(ticker: str, period: str = "6mo", interval: str = "1d"):
         return history_cache[cache_key]
     
     try:
-        t = yf.Ticker(ticker, session=get_yf_session())
+        t = yf.Ticker(ticker)
         df = t.history(period=period, interval=interval)
         if not df.empty:
             history_cache[cache_key] = df

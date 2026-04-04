@@ -126,7 +126,7 @@ def evaluate_outcomes():
     
     for row_id, ticker, signal, price_at_signal in pending:
         try:
-            t = yf.Ticker(ticker, session=get_yf_session())
+            t = yf.Ticker(ticker)
             hist = t.history(period="5d", interval="1d")
             
             if not hist.empty:

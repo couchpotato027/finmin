@@ -141,7 +141,7 @@ def get_cached_info(ticker: str):
         return info_cache[cache_key]
     
     try:
-        stock = yf.Ticker(ticker, session=get_yf_session())
+        stock = yf.Ticker(ticker)
         # Fetching only essential fields to minimize yfinance overhead
         info = stock.info
         info_cache.set(cache_key, info, expire=604800) # 7 days
@@ -159,7 +159,7 @@ def get_cached_history(ticker: str, period: str, interval: str):
         return history_cache[cache_key]
     
     try:
-        stock = yf.Ticker(ticker, session=get_yf_session())
+        stock = yf.Ticker(ticker)
         df = stock.history(period=period, interval=interval)
         if not df.empty:
             history_cache[cache_key] = df
@@ -284,7 +284,7 @@ def get_price(ticker: str):
     3. history (Definitive fallback)
     """
     try:
-        t = yf.Ticker(ticker, session=get_yf_session())
+        t = yf.Ticker(ticker)
         price = None
         prev_close = None
         
@@ -345,7 +345,7 @@ def get_price(ticker: str):
 @app.get("/api/exchangerate")
 def get_exchange_rate():
     try:
-        t = yf.Ticker("USDINR=X", session=get_yf_session())
+        t = yf.Ticker("USDINR=X")
         df = t.history(period="1d")
         if not df.empty:
             rate = df['Close'].iloc[-1]
@@ -366,7 +366,7 @@ def get_ai_signal(ticker: str) -> Dict[str, Any]:
     Works for any ticker string passed.
     """
     try:
-        stock = yf.Ticker(ticker, session=get_yf_session())
+        stock = yf.Ticker(ticker)
         df = stock.history(period="3mo", interval="1d")
         
         if df.empty:
@@ -526,7 +526,7 @@ def market_scan() -> List[Dict[str, Any]]:
     
     for ticker in tickers:
         try:
-            stock = yf.Ticker(ticker, session=get_yf_session())
+            stock = yf.Ticker(ticker)
             df = stock.history(period="3mo", interval="1d")
             
             if df.empty or len(df) < 30:
