@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { fetchAiSignal, AiSignal } from '../api';
 import { CheckCircle2, TrendingUp, Info } from 'lucide-react';
 
+const API_BASE = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 interface SignalPanelProps {
   ticker: string;
   passedSignal?: AiSignal | null;
@@ -25,7 +27,7 @@ const SignalPanel: React.FC<SignalPanelProps> = ({ ticker, passedSignal, scanTim
 
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:8000/api/signal/${ticker}`);
+        const response = await fetch(`${API_BASE}/api/signal/${ticker}`);
         const data = await response.json();
         setSignalData(data);
         setSignalSource('fresh');

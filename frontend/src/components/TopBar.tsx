@@ -2,6 +2,8 @@ import React, { useState, FormEvent, useEffect, useRef } from "react";
 import { Search } from "lucide-react";
 import axios from "axios";
 
+const API_BASE = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 interface TopBarProps {
   ticker: string;
   setTicker: (t: string) => void;
@@ -29,7 +31,7 @@ const TopBar: React.FC<TopBarProps> = ({ ticker, setTicker }) => {
         return;
       }
       try {
-        const { data } = await axios.get(`http://localhost:8000/search?q=${searchInput}`);
+        const { data } = await axios.get(`${API_BASE}/search?q=${searchInput}`);
         setSuggestions(data);
         setSelectedIndex(-1);
         setErrorMsg("");
@@ -94,7 +96,7 @@ const TopBar: React.FC<TopBarProps> = ({ ticker, setTicker }) => {
 
     // Try a direct fetch to backend to see if it's broadly valid/available
     try {
-        const { data } = await axios.get(`http://localhost:8000/search?q=${trimmed}`);
+        const { data } = await axios.get(`${API_BASE}/search?q=${trimmed}`);
         const exactMatch = data.find((s: SearchResult) => s.symbol.toUpperCase() === trimmed);
         if (exactMatch) {
             selectTicker(exactMatch.symbol);

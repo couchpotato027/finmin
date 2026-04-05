@@ -1,5 +1,26 @@
 from yf_session import get_yf_session
 from cache_config import info_cache, history_cache
+import time
+from functools import wraps
+
+# TTL cache for expensive functions
+_se_cache = {}
+
+def ttl_cache(seconds: int):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            key = f"{func.__name__}:{args}:{kwargs}"
+            now = time.time()
+            if key in _se_cache:
+                result, ts = _se_cache[key]
+                if now - ts < seconds:
+                    return result
+            result = func(*args, **kwargs)
+            _se_cache[key] = (result, now)
+            return result
+        return wrapper
+    return decorator
 
 SECTOR_INDICES = {
   "Financial Services": "^NSEBANK",
@@ -13,6 +34,7 @@ SECTOR_INDICES = {
   "FMCG": "^CNXFMCG",
 }
 
+@ttl_cache(seconds=300)
 def get_sector_info(ticker: str) -> dict:
     """ Fetches and caches sector/industry info using persistent disk cache. """
     import yfinance as yf
@@ -48,6 +70,7 @@ def get_cached_history(ticker: str, period: str = "2d", interval: str = "1d"):
     except:
         return pd.DataFrame()
 
+@ttl_cache(seconds=300)
 def get_sector_momentum(ticker: str) -> float:
   try:
     info = get_sector_info(ticker)
@@ -71,6 +94,7 @@ def get_sector_momentum(ticker: str) -> float:
     pass
   return 0.0
 
+@ttl_cache(seconds=60)
 def get_market_breadth() -> float:
   try:
     hist = get_cached_history("^NSEI")

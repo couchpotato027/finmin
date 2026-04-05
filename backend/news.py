@@ -5,8 +5,28 @@ import os
 import urllib.parse
 from datetime import datetime, timezone
 import time
+from functools import wraps
 from dotenv import load_dotenv
 import yfinance as yf
+
+# TTL cache for news
+_news_cache = {}
+
+def ttl_cache(seconds: int):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            key = f"{func.__name__}:{args}:{kwargs}"
+            now = time.time()
+            if key in _news_cache:
+                result, ts = _news_cache[key]
+                if now - ts < seconds:
+                    return result
+            result = func(*args, **kwargs)
+            _news_cache[key] = (result, now)
+            return result
+        return wrapper
+    return decorator
 
 # Load env in case it's called standalone for testing
 load_dotenv()
@@ -128,6 +148,7 @@ def is_relevant(title: str,
     
     return True
 
+@ttl_cache(seconds=1800)
 def get_news(ticker: str, limit: int = 8):
     # FIX 1 — Ticker Resolution
     t_obj = None

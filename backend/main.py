@@ -1,10 +1,14 @@
 import yfinance as yf
 import os
+import time
+from functools import wraps
+from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from yf_session import get_yf_session
 yf.set_tz_cache_location("/tmp/yfinance_cache")
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 import json
 import asyncio
 from typing import List, Dict, Any, Optional
@@ -18,7 +22,34 @@ from news import get_news
 from cache_config import info_cache, history_cache
 from predictor import predict_price
 from backtest import backtest_single, backtest_universe
-import asyncio
+
+# --- Optimization 1: In-memory TTL cache decorator ---
+_cache: Dict[str, Any] = {}
+
+def ttl_cache(seconds: int):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            key = f"{func.__name__}:{args}:{kwargs}"
+            now = time.time()
+            if key in _cache:
+                result, ts = _cache[key]
+                if now - ts < seconds:
+                    return result
+            result = func(*args, **kwargs)
+            _cache[key] = (result, now)
+            return result
+        return wrapper
+    return decorator
+
+# Thread pool for parallel async execution
+executor = ThreadPoolExecutor(max_workers=10)
+
+# Stocks to preload on startup for instant first-load
+PRELOAD_TICKERS = [
+    "HDFCBANK.NS", "TCS.NS", "RELIANCE.NS",
+    "INFY.NS", "ICICIBANK.NS", "AAPL", "TSLA"
+]
 
 load_dotenv()
 
@@ -43,11 +74,22 @@ async def lifespan(app: FastAPI):
         migrate_timestamps_to_utc()
     except Exception as e:
         print(f"DATABASE INITIALIZATION FAILED: {e}")
-        # Note: We let the app continue so the port binds and 502/Bad Gateway is avoided.
     
-    # Start background tasks AFTER yield (when server is already live)
-    # This (run_evaluation_periodically) already includes a delay/interval.
     eval_task = asyncio.create_task(run_evaluation_periodically())
+    
+    # Optimization 4: Preload popular stocks in background
+    async def preload():
+        await asyncio.sleep(5)
+        loop = asyncio.get_event_loop()
+        for ticker in PRELOAD_TICKERS:
+            try:
+                await loop.run_in_executor(executor, lambda t=ticker: get_cached_history(t, "1mo", "30m"))
+                await asyncio.sleep(1)
+            except Exception as e:
+                print(f"Preload {ticker}: {e}")
+        print(f"Preloaded {len(PRELOAD_TICKERS)} tickers")
+    
+    asyncio.create_task(preload())
     
     print(f"Server started successfully (Environment: {'Render' if os.getenv('RENDER') else 'Local'})")
     yield
@@ -56,10 +98,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="FinMin API", lifespan=lifespan)
 
 
+# Optimization 6: Timestamped health endpoint for Railway keepalive
 @app.get("/api/health")
 def health_check():
     return {
         "status": "online",
+        "timestamp": time.time(),
         "environment": "Render" if os.getenv("RENDER") else "Local",
         "database": "postgresql" if os.getenv("DATABASE_URL") else "sqlite"
     }
@@ -73,6 +117,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Optimization 3: GZip compression for all responses > 1KB
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 @app.api_route("/api/evaluate", methods=["GET", "POST"])
 def trigger_evaluation():
@@ -89,12 +136,17 @@ def clear_signals():
     conn.close()
     return {"success": True, "message": "Signal history cleared"}
 
-@app.get("/api/predict/{ticker}")
-def get_prediction(ticker: str):
+@ttl_cache(seconds=3600)
+def _fetch_prediction(ticker: str) -> dict:
     result = predict_price(ticker)
     if not result:
         return {"error": "Prediction failed", "ticker": ticker}
     return result
+
+@app.get("/api/predict/{ticker}")
+def get_prediction(ticker: str, response: Response):
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return _fetch_prediction(ticker)
 
 def format_dateForLightweightCharts(date_val):
     # Lightweight charts needs YYYY-MM-DD or unix timestamp
@@ -277,20 +329,14 @@ async def get_technical_indicators(ticker: str, period: str = "1y") -> Dict[str,
         "ma200": ma200_data
     }
 
-@app.get("/api/price/{ticker}")
-def get_price(ticker: str):
-    """
-    Robust price fetch using three strategies:
-    1. fast_info (Low latency)
-    2. info (Back-up)
-    3. history (Definitive fallback)
-    """
+@ttl_cache(seconds=30)
+def _fetch_price(ticker: str) -> dict:
+    """Cached price fetch using three strategies."""
     try:
         t = yf.Ticker(ticker)
         price = None
         prev_close = None
         
-        # Strategy 1: fast_info (Cleanest and fastest source)
         try:
             fast = t.fast_info
             price = fast.last_price or fast.regular_market_price
@@ -299,7 +345,6 @@ def get_price(ticker: str):
             price = None
             prev_close = None
             
-        # Strategy 2: info
         if price is None or prev_close is None:
             try:
                 info = t.info
@@ -308,7 +353,6 @@ def get_price(ticker: str):
             except:
                 pass
                 
-        # Strategy 3: history
         if price is None or prev_close is None:
             hist = t.history(period="5d")
             if not hist.empty:
@@ -320,7 +364,6 @@ def get_price(ticker: str):
             
         currency = "INR" if ticker.endswith(".NS") or ticker.endswith(".BO") else "USD"
         try:
-            # Attempt currency detection from info
             currency = t.info.get("currency", currency)
         except:
             pass
@@ -328,7 +371,6 @@ def get_price(ticker: str):
         change_pct = round((price - prev_close) / prev_close * 100, 2) if prev_close else 0.0
         short_name = ticker.upper()
         try:
-            # First try extracting name from info if already fetched or fetch it now
             info = t.info
             short_name = info.get("shortName") or info.get("longName") or short_name
         except:
@@ -344,6 +386,11 @@ def get_price(ticker: str):
     except Exception as e:
         return {"error": str(e), "ticker": ticker, "price": None, "change_pct": 0, "currency": "USD"}
 
+@app.get("/api/price/{ticker}")
+def get_price(ticker: str, response: Response):
+    response.headers["Cache-Control"] = "public, max-age=30"
+    return _fetch_price(ticker)
+
 @app.get("/api/exchangerate")
 def get_exchange_rate():
     try:
@@ -358,15 +405,13 @@ def get_exchange_rate():
         return {"rate": 84.0, "base": "USD", "target": "INR"}
 
 @app.get("/api/news/{ticker}")
-def get_news_endpoint(ticker: str):
+def get_news_endpoint(ticker: str, response: Response):
+    response.headers["Cache-Control"] = "public, max-age=1800"
     return get_news(ticker)
 
-@app.get("/api/signal/{ticker}")
-def get_ai_signal(ticker: str) -> Dict[str, Any]:
-    """
-    Returns AI trading signals based on the centralized signal engine.
-    Works for any ticker string passed.
-    """
+@ttl_cache(seconds=300)
+def _fetch_signal(ticker: str) -> dict:
+    """Cached signal generation."""
     try:
         stock = yf.Ticker(ticker)
         df = stock.history(period="3mo", interval="1d")
@@ -374,13 +419,11 @@ def get_ai_signal(ticker: str) -> Dict[str, Any]:
         if df.empty:
             return {"error": "Ticker not found", "ticker": ticker}
             
-        # Ensure we have enough data (Date might be index, reset if needed)
         if df.index.name == 'Date' or 'Date' not in df.columns:
             df = df.reset_index()
             
         result = generate_signal(df, ticker=ticker)
         
-        # Integrate news sentiment
         try:
             news_data = get_news(ticker, limit=5)
             n_score = news_data["summary"]["score"]
@@ -389,7 +432,6 @@ def get_ai_signal(ticker: str) -> Dict[str, Any]:
             result["news_sentiment"] = n_sentiment
             result["news_score"] = n_score
             
-            # Factor into composite score
             if n_score > 0.2:
                 result["score"] += 10
                 result["reasons"].append("Positive news sentiment")
@@ -400,13 +442,16 @@ def get_ai_signal(ticker: str) -> Dict[str, Any]:
             print(f"News integration error for {ticker}: {e}")
 
         result["ticker"] = ticker.upper()
-        
-        # Log signal to database
         log_signal(result["ticker"], result["signal"], result["score"], result["price"])
         
         return result
     except Exception as e:
         return {"error": str(e), "ticker": ticker}
+
+@app.get("/api/signal/{ticker}")
+def get_ai_signal(ticker: str, response: Response) -> Dict[str, Any]:
+    response.headers["Cache-Control"] = "public, max-age=300"
+    return _fetch_signal(ticker)
 
 class ScanRequest(BaseModel):
     universe: Optional[str] = None  # nifty50, nifty_next50, etc.
@@ -459,7 +504,6 @@ async def scan_ticker(ticker: str, semaphore: asyncio.Semaphore) -> Optional[Dic
 async def perform_scan(request: ScanRequest, background_tasks: BackgroundTasks) -> List[Dict[str, Any]]:
     print(f"Received scan request. Universe: {request.universe}, Tickers: {request.tickers}")
     
-    # Run outcome evaluation in the background
     background_tasks.add_task(evaluate_outcomes)
     
     tickers = []
@@ -474,8 +518,21 @@ async def perform_scan(request: ScanRequest, background_tasks: BackgroundTasks) 
         return []
 
     print(f"Scanning {len(tickers)} tickers")
-    semaphore = asyncio.Semaphore(10) # Increase concurrency slightly
-    tasks = [scan_ticker(ticker, semaphore) for ticker in tickers]
+    # Optimization 2: Parallel fetching with semaphore
+    semaphore = asyncio.Semaphore(8)
+    
+    async def fetch_with_timeout(ticker: str):
+        async with semaphore:
+            try:
+                return await asyncio.wait_for(
+                    scan_ticker(ticker, semaphore),
+                    timeout=15.0
+                )
+            except asyncio.TimeoutError:
+                print(f"Timeout scanning {ticker}")
+                return None
+    
+    tasks = [fetch_with_timeout(ticker) for ticker in tickers]
     results = await asyncio.gather(*tasks)
     
     final_results = [r for r in results if r is not None]

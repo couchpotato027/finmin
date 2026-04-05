@@ -208,19 +208,27 @@ const MarketScanner: React.FC = () => {
         setResults(prev => prev.filter(r => r.ticker !== ticker));
     };
 
-    const handleSearchChange = async (val: string) => {
+    // Optimization 8: Debounced search input
+    const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    
+    const handleSearchChange = (val: string) => {
         setSearchTerm(val);
+        
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        
         if (universe === 'custom' && val.length >= 2) {
-            setIsSearching(true);
-            try {
-                const data = await fetchSymbolSearch(val);
-                setSuggestions(data || []);
-                setShowSuggestions(true);
-            } catch (e) {
-                console.error("Search failed", e);
-            } finally {
-                setIsSearching(false);
-            }
+            searchTimerRef.current = setTimeout(async () => {
+                setIsSearching(true);
+                try {
+                    const data = await fetchSymbolSearch(val);
+                    setSuggestions(data || []);
+                    setShowSuggestions(true);
+                } catch (e) {
+                    console.error("Search failed", e);
+                } finally {
+                    setIsSearching(false);
+                }
+            }, 300);
         } else {
             setShowSuggestions(false);
         }

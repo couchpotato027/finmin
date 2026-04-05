@@ -354,33 +354,39 @@ const Portfolio: React.FC = () => {
         fetchCurrentData(updated);
     };
 
-    const handleSearchChange = async (val: string) => {
+    // Optimization 8: Debounced search input
+    const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    
+    const handleSearchChange = (val: string) => {
         setNewTicker(val);
-        setFormError(null); // Clear error on typing (Fix 2)
+        setFormError(null);
+        
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
         
         if (val.length >= 2) {
-            setIsSearching(true);
-            try {
-                const data = await fetchSymbolSearch(val);
-                // Fix 1: Filter results by selected exchange
-                const filtered = (data || []).filter(item => {
-                    if (newExchange === 'NSE') {
-                        return item.symbol?.endsWith('.NS') || 
-                               item.symbol?.endsWith('.BO') ||
-                               ['NSI','NSE','BSE'].some(e => 
-                                 item.exchange?.includes(e))
-                    } else {
-                        return !item.symbol?.endsWith('.NS') && 
-                               !item.symbol?.endsWith('.BO');
-                    }
-                });
-                setSuggestions(filtered);
-                setShowSuggestions(filtered.length > 0);
-            } catch (e) {
-                console.error("Search failed", e);
-            } finally {
-                setIsSearching(false);
-            }
+            searchTimerRef.current = setTimeout(async () => {
+                setIsSearching(true);
+                try {
+                    const data = await fetchSymbolSearch(val);
+                    const filtered = (data || []).filter(item => {
+                        if (newExchange === 'NSE') {
+                            return item.symbol?.endsWith('.NS') || 
+                                   item.symbol?.endsWith('.BO') ||
+                                   ['NSI','NSE','BSE'].some(e => 
+                                     item.exchange?.includes(e))
+                        } else {
+                            return !item.symbol?.endsWith('.NS') && 
+                                   !item.symbol?.endsWith('.BO');
+                        }
+                    });
+                    setSuggestions(filtered);
+                    setShowSuggestions(filtered.length > 0);
+                } catch (e) {
+                    console.error("Search failed", e);
+                } finally {
+                    setIsSearching(false);
+                }
+            }, 300);
         } else {
             setShowSuggestions(false);
         }
