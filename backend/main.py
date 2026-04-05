@@ -16,6 +16,8 @@ from history import init_db, log_signal, evaluate_outcomes, get_win_rate, get_re
 from fastapi import BackgroundTasks
 from news import get_news
 from cache_config import info_cache, history_cache
+from predictor import predict_price
+from backtest import backtest_single, backtest_universe
 import asyncio
 
 load_dotenv()
