@@ -32,13 +32,10 @@ def get_cached_history(ticker: str, period: str = "6mo", interval: str = "1d"):
 
 def predict_price(ticker: str, days: int = 5) -> Dict[str, Any]:
     """ USES ML (Linear Regression) to predict future price trends based on historical momentum. """
-    import numpy as np
-    import pandas as pd
-    from sklearn.linear_model import LinearRegression
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.metrics import r2_score
-    
     try:
+        import numpy as np
+        import pandas as pd
+        
         # Use cached history for speed
         df = get_cached_history(ticker, period="1y", interval="1d")
 
@@ -91,15 +88,23 @@ def predict_price(ticker: str, days: int = 5) -> Dict[str, Any]:
         X_train = train_df[feature_cols].values
         y_train = train_df['Close'].values
 
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
+        # Numpy standard scaling
+        mean_x = np.mean(X_train, axis=0)
+        std_x = np.std(X_train, axis=0)
+        std_x[std_x == 0] = 1.0 # Protect against divide by zero
+        X_train_scaled = (X_train - mean_x) / std_x
 
-        model = LinearRegression()
-        model.fit(X_train_scaled, y_train)
+        # Add bias column (ones) for multivariate linear regression
+        X_bias = np.column_stack([np.ones(X_train_scaled.shape[0]), X_train_scaled])
+
+        # Calculate exact weights via Ordinary Least Squares
+        w, _, _, _ = np.linalg.lstsq(X_bias, y_train, rcond=None)
 
         # Calculate R² score on training data
-        y_pred_train = model.predict(X_train_scaled)
-        r2 = r2_score(y_train, y_pred_train)
+        y_pred_train = np.dot(X_bias, w)
+        ss_res = np.sum((y_train - y_pred_train)**2)
+        ss_tot = np.sum((y_train - np.mean(y_train))**2)
+        r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
 
         if r2 > 0.85:
             confidence = "high"
@@ -147,8 +152,9 @@ def predict_price(ticker: str, days: int = 5) -> Dict[str, Any]:
                 last_ma20
             ]])
 
-            future_scaled = scaler.transform(future_features)
-            pred_price = float(model.predict(future_scaled)[0])
+            future_scaled = (future_features - mean_x) / std_x
+            future_input = np.column_stack([np.ones(1), future_scaled])
+            pred_price = float(np.dot(future_input, w)[0])
 
             predictions.append({
                 "day": i + 1,
