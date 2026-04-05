@@ -211,7 +211,7 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
             
-            {priceInfo ? (
+            {priceInfo && typeof priceInfo.price === 'number' ? (
               <div className="flex items-center space-x-4 mt-1 animate-in fade-in slide-in-from-left-2 duration-700">
                 <div className="flex items-center space-x-2">
                     <div className={`w-2 h-2 rounded-full ${marketStatus.pulse ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-gray-500'} mt-1`} />
