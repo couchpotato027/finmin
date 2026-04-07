@@ -5,7 +5,7 @@ import logging
 from typing import List, Dict, Any
 
 # Configuration
-DB_PATH = "finmin_signals.db"
+DB_PATH = os.environ.get("DB_PATH", "/tmp/finmin_signals.db")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_connection():
@@ -100,57 +100,79 @@ def log_signal(ticker, signal, score, price):
     conn.close()
     logging.info(f"Logged {signal} signal for {ticker}")
 
-def evaluate_outcomes():
-    """ Periodically evaluates the status of pending signals (WIN/LOSS). """
-    import yfinance as yf
-    import time
-    
-    conn = get_connection()
+def evaluate_outcomes(force: bool = False):
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    p = "%s" if DATABASE_URL else "?"
-    
-    # Different interval syntax
-    if DATABASE_URL:
-        interval_sql = "timestamp <= NOW() - INTERVAL '5 days'"
-    else:
-        interval_sql = "timestamp <= datetime('now', '-5 days')"
-        
-    cursor.execute(f"""
-        SELECT id, ticker, signal, price_at_signal 
+    cursor.execute("""
+        SELECT id, ticker, signal, 
+               price_at_signal, timestamp
         FROM signals 
-        WHERE outcome IS NULL 
-        AND {interval_sql}
+        WHERE outcome IS NULL
     """)
     pending = cursor.fetchall()
     
-    for row_id, ticker, signal, price_at_signal in pending:
+    from datetime import datetime, timezone, timedelta
+    import yfinance as yf
+    
+    now_utc = datetime.now(timezone.utc)
+    cutoff = now_utc - timedelta(days=5)
+    
+    to_evaluate = []
+    for row in pending:
+        row_id, ticker, signal, price, ts_str = row
+        if force:
+            to_evaluate.append(
+                (row_id, ticker, signal, price))
+            continue
+        try:
+            ts_clean = str(ts_str).strip()
+            ts = datetime.fromisoformat(
+                ts_clean.replace('Z', '+00:00'))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            if ts <= cutoff:
+                to_evaluate.append(
+                    (row_id, ticker, signal, price))
+        except Exception as e:
+            print(f"Timestamp error {ticker}: {e}")
+            if force:
+                to_evaluate.append(
+                    (row_id, ticker, signal, price))
+    
+    print(f"Evaluating {len(to_evaluate)} signals...")
+    
+    for row_id, ticker, signal, price_at_signal in to_evaluate:
         try:
             t = yf.Ticker(ticker)
             hist = t.history(period="5d", interval="1d")
-            
             if not hist.empty:
-                current_price = float(hist['Close'].iloc[-1])
-                pct = round((current_price - price_at_signal) / price_at_signal * 100, 2)
-                
+                current_price = float(
+                    hist['Close'].iloc[-1])
+                pct = round(
+                    (current_price - price_at_signal) 
+                    / price_at_signal * 100, 2)
                 if signal == 'BUY':
-                    outcome = 'WIN' if current_price > price_at_signal else 'LOSS'
-                elif signal == 'SELL':
-                    outcome = 'WIN' if current_price < price_at_signal else 'LOSS'
-                else: continue
-                
-                cursor.execute(f'''
-                    UPDATE signals SET 
-                        outcome = {p},
-                        price_at_outcome = {p},
-                        pct_change = {p}
-                    WHERE id = {p}
-                ''', (outcome, current_price, pct, row_id))
-                logging.info(f"Evaluated {ticker}: {outcome} ({pct}%)")
-            
+                    outcome = 'WIN' \
+                        if current_price > price_at_signal \
+                        else 'LOSS'
+                else:
+                    outcome = 'WIN' \
+                        if current_price < price_at_signal \
+                        else 'LOSS'
+                cursor.execute('''
+                    UPDATE signals SET
+                        outcome = ?,
+                        price_at_outcome = ?,
+                        pct_change = ?
+                    WHERE id = ?
+                ''', (outcome, current_price, 
+                      pct, row_id))
+                print(f"{ticker}: {outcome} ({pct}%)")
         except Exception as e:
-            logging.error(f"Error evaluating {ticker}: {e}")
-            
+            print(f"Eval error {ticker}: {e}")
+    
     conn.commit()
     conn.close()
 

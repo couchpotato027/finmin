@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         <button 
-          className="md:hidden fixed top-4 left-4 z-50 
+          className="md:hidden fixed top-3 left-3 z-[60] 
                      bg-[#111827] p-2 rounded-lg 
                      border border-[#1f2937]"
           onClick={() => setSidebarOpen(true)}

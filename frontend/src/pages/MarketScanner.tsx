@@ -586,7 +586,7 @@ const MarketScanner: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-auto p-8">
+                <div className="flex-1 overflow-auto p-4 md:p-8">
                     <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="flex-1">
                             <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Technical Opportunity Radar</h2>

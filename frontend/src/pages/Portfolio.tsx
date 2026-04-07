@@ -471,7 +471,7 @@ const Portfolio: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-auto p-8">
+                <div className="flex-1 overflow-auto p-4 md:p-8">
                     {/* SECTION 1: Summary Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
                         <SummaryCard 

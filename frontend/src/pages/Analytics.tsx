@@ -124,7 +124,7 @@ const Analytics: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-auto p-8">
+                <div className="flex-1 overflow-auto p-4 md:p-8">
                     {isEmpty ? (
                         <div className="h-full flex flex-col items-center justify-center space-y-6 animate-in fade-in zoom-in duration-700">
                             <div className="p-6 bg-blue-500/5 rounded-full border border-blue-500/10 shadow-[0_0_50px_rgba(59,130,246,0.05)]">

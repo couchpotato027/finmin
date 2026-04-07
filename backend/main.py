@@ -15,7 +15,7 @@ from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import datetime
 import requests
-from signal_engine import generate_signal
+from signal_engine import generate_signal, generate_signal_fast
 from history import init_db, log_signal, evaluate_outcomes, get_win_rate, get_recent_signals, migrate_timestamps_to_utc
 from fastapi import BackgroundTasks
 from news import get_news
@@ -122,8 +122,9 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 @app.api_route("/api/evaluate", methods=["GET", "POST"])
-def trigger_evaluation():
-    evaluate_outcomes()
+def trigger_evaluation(force: bool = False):
+    from history import evaluate_outcomes, get_win_rate
+    evaluate_outcomes(force=force)
     return get_win_rate()
 
 @app.delete("/api/signals/clear")
@@ -500,44 +501,66 @@ async def scan_ticker(ticker: str, semaphore: asyncio.Semaphore) -> Optional[Dic
             traceback.print_exc()
             return None
 
-@app.post("/api/scan")
-async def perform_scan(request: ScanRequest, background_tasks: BackgroundTasks) -> List[Dict[str, Any]]:
-    print(f"Received scan request. Universe: {request.universe}, Tickers: {request.tickers}")
-    
-    background_tasks.add_task(evaluate_outcomes)
-    
-    tickers = []
-    if request.tickers:
-        tickers = request.tickers
-    elif request.universe:
-        universes = load_universes()
-        tickers = universes.get(request.universe, [])
-    
-    if not tickers:
-        print(f"No tickers found for scan.")
-        return []
+_executor = ThreadPoolExecutor(max_workers=15)
 
-    print(f"Scanning {len(tickers)} tickers")
-    # Optimization 2: Parallel fetching with semaphore
-    semaphore = asyncio.Semaphore(8)
+@app.post("/api/scan")
+async def perform_scan(request: ScanRequest) -> List[Dict[str, Any]]:
+    universe = request.universe or "nifty50"
+    custom_tickers = request.tickers or []
     
-    async def fetch_with_timeout(ticker: str):
+    if custom_tickers:
+        tickers = custom_tickers
+    else:
+        try:
+            with open("universes.json") as f:
+                universes = json.load(f)
+            tickers = universes.get(universe, universes.get("nifty50", []))
+        except Exception as e:
+            print(f"Universe load error: {e}")
+            tickers = ["HDFCBANK.NS", "TCS.NS", "RELIANCE.NS", "INFY.NS"]
+            
+    loop = asyncio.get_event_loop()
+    semaphore = asyncio.Semaphore(15)
+    
+    async def fetch_one(ticker):
         async with semaphore:
             try:
                 return await asyncio.wait_for(
-                    scan_ticker(ticker, semaphore),
-                    timeout=15.0
+                    loop.run_in_executor(
+                        _executor,
+                        generate_signal_fast,
+                        ticker
+                    ),
+                    timeout=20.0
                 )
             except asyncio.TimeoutError:
-                print(f"Timeout scanning {ticker}")
+                print(f"Timeout: {ticker}")
+                return None
+            except Exception as e:
+                print(f"Error: {ticker}: {e}")
                 return None
     
-    tasks = [fetch_with_timeout(ticker) for ticker in tickers]
+    tasks = [fetch_one(t) for t in tickers]
     results = await asyncio.gather(*tasks)
     
-    final_results = [r for r in results if r is not None]
-    print(f"Scan complete. Found {len(final_results)} results.")
-    return final_results
+    valid = [r for r in results if r and isinstance(r, dict) and 'ticker' in r]
+    
+    valid.sort(key=lambda x: x.get('score', 0), reverse=True)
+    
+    # Log signals to history
+    for r in valid:
+        if r.get('signal') in ['BUY', 'SELL']:
+            try:
+                log_signal(
+                    ticker=r['ticker'],
+                    signal=r['signal'],
+                    score=r.get('score', 0),
+                    price=r.get('price', 0)
+                )
+            except Exception as e:
+                print(f"Log error: {e}")
+    
+    return valid
 
 @app.get("/api/search")
 def search_tickers(q: str):
