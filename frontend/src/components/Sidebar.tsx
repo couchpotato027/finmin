@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, LineChart, PieChart, Settings, Activity, Play } from 'lucide-react';
+import { LayoutDashboard, LineChart, PieChart, Settings, Activity, Play, Hexagon } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 
 interface SidebarProps {
@@ -38,8 +38,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick, mobileOpen, setMobil
           : '-translate-x-full md:translate-x-0'}
       `}>
       <div className="h-16 flex items-center px-6 border-b border-[#1f2937]">
-        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3 font-bold text-white shadow-lg shadow-blue-500/20">F</div>
-        <span className="hidden md:inline text-xl font-bold tracking-tight text-white">FinMin</span>
+        <div className="w-8 h-8 bg-gradient-to-tr from-blue-600 to-indigo-400 rounded-xl flex items-center justify-center mr-3 text-white shadow-lg shadow-blue-500/20 shrink-0">
+          <Hexagon size={18} strokeWidth={2.5} fill="currentColor" fillOpacity={0.2} />
+        </div>
+        <span className="hidden md:inline text-xl font-extrabold tracking-tight text-white">
+          Fin<span className="text-blue-400">Min</span>
+        </span>
       </div>
       
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
