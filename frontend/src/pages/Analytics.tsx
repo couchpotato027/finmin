@@ -147,7 +147,7 @@ const Analytics: React.FC = () => {
                     ) : (
                         <div className="space-y-8 animate-in fade-in duration-500">
                             {/* SECTION 1: Summary Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <AnalyticsCard 
                                     label="Total Signals" 
                                     value={stats?.total ?? 0} 

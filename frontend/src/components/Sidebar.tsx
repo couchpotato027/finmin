@@ -4,9 +4,11 @@ import { useLocation, Link } from 'react-router-dom';
 
 interface SidebarProps {
   onSettingsClick?: () => void;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick, mobileOpen, setMobileOpen }) => {
   const location = useLocation();
   
   const navItems = [
@@ -18,7 +20,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick }) => {
   ];
 
   return (
-    <aside className="w-16 md:w-64 bg-[#111827] border-r border-[#1f2937] flex flex-col h-full shrink-0 transition-all duration-200">
+    <>
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <aside className={`
+        fixed md:relative z-50 md:z-auto
+        h-full flex flex-col
+        bg-[#111827] border-r border-[#1f2937]
+        transition-transform duration-200
+        w-64 shrink-0
+        ${mobileOpen 
+          ? 'translate-x-0' 
+          : '-translate-x-full md:translate-x-0'}
+      `}>
       <div className="h-16 flex items-center px-6 border-b border-[#1f2937]">
         <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3 font-bold text-white shadow-lg shadow-blue-500/20">F</div>
         <span className="hidden md:inline text-xl font-bold tracking-tight text-white">FinMin</span>
@@ -51,6 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick }) => {
         </button>
       </div>
     </aside>
+    </>
   );
 };
 

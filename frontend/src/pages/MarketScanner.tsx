@@ -70,7 +70,8 @@ const MarketScanner: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddingTicker, setIsAddingTicker] = useState(false);
     const [newTickerInput, setNewTickerInput] = useState('');
-    const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
+    const [scanProgress, setScanProgress] = useState(0);
+    const [totalStocks, setTotalStocks] = useState(0);
     const [errorToast, setErrorToast] = useState<string | null>(null);
     
     // New Search Architecture State
@@ -95,7 +96,6 @@ const MarketScanner: React.FC = () => {
 
     const loadScan = async (targetUniverse: string = universe) => {
         setLoading(true);
-        setScanProgress(null);
         try {
             if (targetUniverse === 'watchlist') {
                 const savedWatchlist = JSON.parse(localStorage.getItem('finmin_watchlist') || '[]');
@@ -104,14 +104,13 @@ const MarketScanner: React.FC = () => {
                     setLoading(false);
                     return;
                 }
-                setScanProgress({ current: 0, total: savedWatchlist.length });
+                setTotalStocks(savedWatchlist.length);
                 const watchlistResults: ScannerResult[] = [];
                 for (let i = 0; i < savedWatchlist.length; i++) {
                     try {
                         const signal = await fetchAiSignal(savedWatchlist[i]);
                         watchlistResults.push(signal as ScannerResult);
                     } catch (e) { console.error(e); }
-                    setScanProgress({ current: i + 1, total: savedWatchlist.length });
                 }
                 setResults(watchlistResults);
             } else if (targetUniverse === 'custom') {
@@ -131,12 +130,31 @@ const MarketScanner: React.FC = () => {
             console.error("Failed to fetch scanner results:", error);
         } finally {
             setLoading(false);
-            setScanProgress(null);
             // Also refresh win rate stats
             const stats = await fetchWinRate();
             setWinRate(stats);
         }
     };
+
+    useEffect(() => {
+        const API = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000';
+        fetch(`${API}/api/health`).catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        if (!loading) {
+            setScanProgress(100);
+            return;
+        }
+        setScanProgress(0);
+        const interval = setInterval(() => {
+            setScanProgress(prev => {
+                if (prev >= 90) return prev;
+                return prev + (90 - prev) * 0.1;
+            });
+        }, 500);
+        return () => clearInterval(interval);
+    }, [loading]);
 
     useEffect(() => {
         const savedWatchlist = localStorage.getItem('finmin_watchlist');
@@ -721,7 +739,8 @@ const MarketScanner: React.FC = () => {
                     </div>
 
                     <div className="bg-[#111827] rounded-xl border border-[#1f2937] overflow-hidden shadow-2xl">
-                        <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-[800px] w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-[#1f2937]/50 border-b border-[#1f2937]">
                                     <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-[0.2em] text-gray-500 w-12"></th>
@@ -753,18 +772,18 @@ const MarketScanner: React.FC = () => {
                                 {loading && sortedAndFilteredResults.length === 0 ? (
                                     <tr>
                                         <td colSpan={8} className="px-6 py-24 text-center">
-                                            <div className="flex flex-col items-center justify-center space-y-6">
-                                                <div className="relative">
-                                                    <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse"></div>
-                                                    <Loader2 className="animate-spin h-12 w-12 text-blue-500 relative" />
+                                            <div className="flex flex-col items-center py-12 gap-4">
+                                                <div className="text-sm text-gray-400">
+                                                    Scanning {universe === 'custom' ? 'custom list' : universe}...
                                                 </div>
-                                                <div className="text-center">
-                                                    <p className="text-gray-400 font-medium tracking-wide mb-1">Synthesizing global market data...</p>
-                                                    {scanProgress && (
-                                                        <p className="text-blue-400 text-xs font-black font-mono">
-                                                            Progress: {scanProgress.current} / {scanProgress.total} ({Math.round((scanProgress.current / scanProgress.total) * 100)}%)
-                                                        </p>
-                                                    )}
+                                                <div className="w-64 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                                                        style={{ width: `${scanProgress}%` }}
+                                                    />
+                                                </div>
+                                                <div className="text-xs text-gray-600">
+                                                    This may take 10-15 seconds on first load
                                                 </div>
                                             </div>
                                         </td>
@@ -851,6 +870,7 @@ const MarketScanner: React.FC = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
         </div>

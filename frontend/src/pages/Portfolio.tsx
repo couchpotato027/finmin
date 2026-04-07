@@ -222,13 +222,15 @@ const Portfolio: React.FC = () => {
 
             if (priceData && priceData.price) {
                 const diff = ((buy - priceData.price) / priceData.price) * 100;
-                setMarketHint({
+                const newHint = {
                     price: priceData.price,
                     currency: priceData.currency || (normalized.endsWith('.NS') ? 'INR' : 'USD'),
                     diff,
                     signal: (signalData as any).signal,
                     score: (signalData as any).score
-                });
+                };
+                setMarketHint(newHint);
+                console.log('Market hint set:', newHint);
             }
         } catch (e) {
             console.error("Hint fetch failed", e);
@@ -471,7 +473,7 @@ const Portfolio: React.FC = () => {
 
                 <div className="flex-1 overflow-auto p-8">
                     {/* SECTION 1: Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-2">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
                         <SummaryCard 
                             label="Total Invested" 
                             value={`₹${(stats.totalInvested || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
@@ -597,38 +599,44 @@ const Portfolio: React.FC = () => {
                                         onChange={(e) => setNewBuyPrice(e.target.value)}
                                         className="w-full bg-[#0b0f19] border border-[#1f2937] text-white text-sm rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none transition-all font-mono"
                                     />
-                                    {marketHint && (
-                                        <div className={`text-[10px] font-bold px-1 transition-all animate-in fade-in slide-in-from-top-1 ${(() => {
-                                            const sig = marketHint.signal || 'HOLD';
-                                            const isAbove = parseFloat(newBuyPrice) > marketHint.price;
-                                            if (sig === 'BUY') return isAbove ? 'text-amber-400' : 'text-emerald-400';
-                                            if (sig === 'SELL') return 'text-rose-400';
-                                            return isAbove ? 'text-amber-400' : 'text-gray-400';
-                                        })()}`}>
-                                            Mkt: {getCurrencySymbol(marketHint.currency)}{marketHint.price.toLocaleString()} · 
-                                            {(() => {
+                                    <div style={{ 
+                                        opacity: marketHint ? 1 : 0,
+                                        transition: 'opacity 0.2s',
+                                        minHeight: '20px'
+                                    }}>
+                                        {marketHint && (
+                                            <div className={`text-[10px] font-bold px-1 transition-all animate-in fade-in slide-in-from-top-1 ${(() => {
                                                 const sig = marketHint.signal || 'HOLD';
-                                                const buy = parseFloat(newBuyPrice);
-                                                const isAbove = buy > marketHint.price;
-                                                
-                                                if (sig === 'BUY') {
-                                                    return isAbove ? 'Buying above market — but signal is bullish' : 'Good entry — signal is bullish';
-                                                }
-                                                if (sig === 'HOLD') {
-                                                    return isAbove ? 'Buying above market — signal is neutral' : 'Fair entry — signal is neutral';
-                                                }
-                                                if (sig === 'SELL') {
-                                                    return isAbove ? 'Poor entry — buying above market with bearish signal' : 'Caution — signal is bearish despite lower price';
-                                                }
-                                                return '';
-                                            })()}
-                                            {marketHint.score !== undefined && (
-                                                <span className="text-gray-600 font-medium ml-1">
-                                                    (Signal: {marketHint.signal} {marketHint.score})
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
+                                                const isAbove = parseFloat(newBuyPrice) > marketHint.price;
+                                                if (sig === 'BUY') return isAbove ? 'text-amber-400' : 'text-emerald-400';
+                                                if (sig === 'SELL') return 'text-rose-400';
+                                                return isAbove ? 'text-amber-400' : 'text-gray-400';
+                                            })()}`}>
+                                                Mkt: {getCurrencySymbol(marketHint.currency)}{marketHint.price.toLocaleString()} · 
+                                                {(() => {
+                                                    const sig = marketHint.signal || 'HOLD';
+                                                    const buy = parseFloat(newBuyPrice);
+                                                    const isAbove = buy > marketHint.price;
+                                                    
+                                                    if (sig === 'BUY') {
+                                                        return isAbove ? 'Buying above market — but signal is bullish' : 'Good entry — signal is bullish';
+                                                    }
+                                                    if (sig === 'HOLD') {
+                                                        return isAbove ? 'Buying above market — signal is neutral' : 'Fair entry — signal is neutral';
+                                                    }
+                                                    if (sig === 'SELL') {
+                                                        return isAbove ? 'Poor entry — buying above market with bearish signal' : 'Caution — signal is bearish despite lower price';
+                                                    }
+                                                    return '';
+                                                })()}
+                                                {marketHint.score !== undefined && (
+                                                    <span className="text-gray-600 font-medium ml-1">
+                                                        (Signal: {marketHint.signal} {marketHint.score})
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="w-full md:w-40">
