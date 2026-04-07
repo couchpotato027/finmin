@@ -590,7 +590,7 @@ const MarketScanner: React.FC = () => {
                     <div className="mb-8 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
                         <div className="flex-1 min-w-[300px]">
                             <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Technical Opportunity Radar</h2>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="flex flex-wrap items-center gap-4">
                                 <p className="text-gray-400 max-w-2xl text-[13px] leading-relaxed">
                                     Advanced multi-factor scanning using weighted scoring: RSI (25%), MACD (40%), Volume (20%), Trend (15%). 
                                 </p>
