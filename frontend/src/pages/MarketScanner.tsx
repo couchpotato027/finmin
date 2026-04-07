@@ -59,11 +59,21 @@ const getSectorColor = (sector: string) => {
   return SECTOR_COLORS["Other"]
 }
 
+// Global cache variables so scanning isn't lost on unmount
+let cachedScannerResults: Record<string, ScannerResult[]> = {};
+let cachedWinRate: WinRateData | null = null;
+
 const MarketScanner: React.FC = () => {
     const navigate = useNavigate();
     const [universe, setUniverse] = useState(() => localStorage.getItem('finmin_default_universe') || 'nifty50');
-    const [results, setResults] = useState<ScannerResult[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [results, setResults] = useState<ScannerResult[]>(() => {
+        const u = localStorage.getItem('finmin_default_universe') || 'nifty50';
+        return cachedScannerResults[u] || [];
+    });
+    const [loading, setLoading] = useState(() => {
+        const u = localStorage.getItem('finmin_default_universe') || 'nifty50';
+        return !cachedScannerResults[u];
+    });
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'score', direction: 'desc' });
     const [filter, setFilter] = useState<'ALL' | 'BUY' | 'SELL' | 'WATCHLIST'>('ALL');
     const [watchlist, setWatchlist] = useState<string[]>([]);
@@ -79,7 +89,7 @@ const MarketScanner: React.FC = () => {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-    const [winRate, setWinRate] = useState<WinRateData | null>(null);
+    const [winRate, setWinRate] = useState<WinRateData | null>(cachedWinRate);
 
     const [collapsedSectors, setCollapsedSectors] = 
       useState<Set<string>>(() => {
@@ -113,6 +123,7 @@ const MarketScanner: React.FC = () => {
                     } catch (e) { console.error(e); }
                 }
                 setResults(watchlistResults);
+                cachedScannerResults[targetUniverse] = watchlistResults;
             } else if (targetUniverse === 'custom') {
                 const savedCustom = JSON.parse(localStorage.getItem('finmin_custom_tickers') || '[]');
                 if (savedCustom.length === 0) {
@@ -122,9 +133,11 @@ const MarketScanner: React.FC = () => {
                 }
                 const data = await fetchUniverseScan(undefined, savedCustom);
                 setResults(data);
+                cachedScannerResults[targetUniverse] = data;
             } else {
                 const data = await fetchUniverseScan(targetUniverse);
                 setResults(data);
+                cachedScannerResults[targetUniverse] = data;
             }
         } catch (error) {
             console.error("Failed to fetch scanner results:", error);
@@ -133,6 +146,7 @@ const MarketScanner: React.FC = () => {
             // Also refresh win rate stats
             const stats = await fetchWinRate();
             setWinRate(stats);
+            cachedWinRate = stats;
         }
     };
 
@@ -167,7 +181,10 @@ const MarketScanner: React.FC = () => {
             setCustomTickers(JSON.parse(savedCustom));
         }
 
-        loadScan('nifty50');
+        const currentUniverse = localStorage.getItem('finmin_default_universe') || 'nifty50';
+        if (!cachedScannerResults[currentUniverse]) {
+            loadScan(currentUniverse);
+        }
     }, []);
 
     const handleUniverseChange = (newUniv: string) => {
