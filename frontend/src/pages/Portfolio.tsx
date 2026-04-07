@@ -203,7 +203,7 @@ const Portfolio: React.FC = () => {
 
     const fetchTickerHint = async (ticker: string) => {
         const buy = parseFloat(newBuyPrice);
-        if (!ticker || ticker.length < 2 || isNaN(buy) || buy <= 0) {
+        if (!ticker || ticker.length < 2) {
             setMarketHint(null);
             return;
         }
@@ -221,7 +221,7 @@ const Portfolio: React.FC = () => {
             ]);
 
             if (priceData && priceData.price) {
-                const diff = ((buy - priceData.price) / priceData.price) * 100;
+                const diff = isNaN(buy) ? 0 : ((buy - priceData.price) / priceData.price) * 100;
                 const newHint = {
                     price: priceData.price,
                     currency: priceData.currency || (normalized.endsWith('.NS') ? 'INR' : 'USD'),
@@ -616,7 +616,11 @@ const Portfolio: React.FC = () => {
                                                 {(() => {
                                                     const sig = marketHint.signal || 'HOLD';
                                                     const buy = parseFloat(newBuyPrice);
-                                                    const isAbove = buy > marketHint.price;
+                                                    const isAbove = !isNaN(buy) && buy > marketHint.price;
+                                                    
+                                                    if (isNaN(buy)) {
+                                                        return sig === 'BUY' ? 'Bullish signal detected' : (sig === 'SELL' ? 'Bearish signal detected' : 'Neutral signal');
+                                                    }
                                                     
                                                     if (sig === 'BUY') {
                                                         return isAbove ? 'Buying above market — but signal is bullish' : 'Good entry — signal is bullish';

@@ -166,8 +166,8 @@ const TopBar: React.FC<TopBarProps> = ({ ticker, setTicker }) => {
   const market = getMarketStatus();
 
   return (
-    <header className="h-16 bg-[#0b0f19]/80 backdrop-blur-md border-b border-[#1f2937] flex items-center justify-between px-8 z-50 sticky top-0">
-      <div className="relative w-96" ref={dropdownRef}>
+    <header className="h-16 bg-[#0b0f19]/80 backdrop-blur-md border-b border-[#1f2937] flex items-center justify-between px-4 md:px-8 pl-14 md:pl-8 z-50 sticky top-0 gap-4">
+      <div className="relative flex-1 max-w-md" ref={dropdownRef}>
         <form onSubmit={handleSubmit} className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -217,7 +217,7 @@ const TopBar: React.FC<TopBarProps> = ({ ticker, setTicker }) => {
       </div>
 
       <div className="flex items-center space-x-6">
-        <div className={`flex items-center ${market.bg} ${market.border} border px-3 py-1.5 rounded-full transition-all duration-500`}>
+        <div className={`hidden md:flex items-center ${market.bg} ${market.border} border px-3 py-1.5 rounded-full transition-all duration-500`}>
           <div className={`w-2 h-2 rounded-full ${market.pulse ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-gray-500'} mr-2`} />
           <span className={`text-[10px] font-black tracking-widest uppercase ${market.color}`}>{market.label}</span>
         </div>

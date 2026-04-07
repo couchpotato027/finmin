@@ -175,7 +175,7 @@ const Dashboard: React.FC = () => {
         {/* Dashboard Body */}
         <div className="flex-1 overflow-auto p-8">
           <div className="flex flex-col mb-8">
-            <div className="flex items-baseline space-x-3 mb-1">
+            <div className="flex flex-wrap items-baseline gap-3 mb-1">
               <h1 className="text-4xl font-black tracking-tighter text-white uppercase">{ticker}</h1>
               {priceInfo?.short_name && (
                 <span className="text-gray-500 text-sm font-bold tracking-widest uppercase opacity-50 truncate max-w-xs">{priceInfo.short_name}</span>
