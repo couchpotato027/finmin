@@ -18,10 +18,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick }) => {
   ];
 
   return (
-    <aside className="w-64 bg-[#111827] border-r border-[#1f2937] flex flex-col h-full shrink-0">
+    <aside className="w-16 md:w-64 bg-[#111827] border-r border-[#1f2937] flex flex-col h-full shrink-0 transition-all duration-200">
       <div className="h-16 flex items-center px-6 border-b border-[#1f2937]">
         <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3 font-bold text-white shadow-lg shadow-blue-500/20">F</div>
-        <span className="text-xl font-bold tracking-tight text-white">FinMin</span>
+        <span className="hidden md:inline text-xl font-bold tracking-tight text-white">FinMin</span>
       </div>
       
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
@@ -36,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick }) => {
             }`}
           >
             <item.icon className={`h-5 w-5 ${location.pathname === item.path ? 'text-blue-500' : 'text-gray-400'}`} />
-            <span>{item.name}</span>
+            <span className="hidden md:inline">{item.name}</span>
           </Link>
         ))}
       </nav>
@@ -46,7 +46,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick }) => {
           onClick={onSettingsClick}
           className="w-full flex items-center px-4 py-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-[#1f2937]/50"
         >
-          <Settings className="w-5 h-5 mr-3" /> Settings
+          <Settings className="w-5 h-5 md:mr-3" />
+          <span className="hidden md:inline">Settings</span>
         </button>
       </div>
     </aside>
