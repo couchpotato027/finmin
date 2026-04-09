@@ -30,7 +30,9 @@ const MACDChart: React.FC<MACDChartProps> = ({ ticker }) => {
             chartRef.current.remove();
         }
 
-        const chart = createChart(chartContainerRef.current!, {
+        if (!chartContainerRef.current) return;
+
+        const chart = createChart(chartContainerRef.current, {
           layout: {
             background: { type: ColorType.Solid, color: '#111827' },
             textColor: '#9ca3af',
@@ -39,7 +41,7 @@ const MACDChart: React.FC<MACDChartProps> = ({ ticker }) => {
             vertLines: { color: '#1f2937' },
             horzLines: { color: '#1f2937' },
           },
-          width: chartContainerRef.current.clientWidth,
+          width: chartContainerRef.current.clientWidth || 300,
           height: 180,
           rightPriceScale: {
             borderColor: '#1f2937',

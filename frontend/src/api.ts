@@ -185,7 +185,8 @@ export interface BacktestResult {
 }
 
 export const fetchBacktest = async (ticker: string, period: string): Promise<BacktestResult> => {
-    const { data } = await axios.get(`${API_BASE_URL}/api/backtest/${ticker.toUpperCase()}?period=${period}`);
+    // Switching to v2 (query params) to avoid dot-misinterpretation in path params
+    const { data } = await axios.get(`${API_BASE_URL}/api/v2/backtest?ticker=${ticker.toUpperCase()}&period=${period}`);
     return data;
 };
 

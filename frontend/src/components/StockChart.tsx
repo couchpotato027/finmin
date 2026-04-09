@@ -56,7 +56,9 @@ const StockChart: React.FC<StockChartProps> = ({ ticker, isAdvanced = false }) =
             chartRef.current.remove();
         }
 
-        const chart = createChart(chartContainerRef.current!, {
+        if (!chartContainerRef.current) return;
+
+        const chart = createChart(chartContainerRef.current, {
           layout: {
             background: { color: '#0b0f19' },
             textColor: '#e5e7eb',
@@ -66,8 +68,8 @@ const StockChart: React.FC<StockChartProps> = ({ ticker, isAdvanced = false }) =
             vertLines: { color: '#1f2937' },
             horzLines: { color: '#1f2937' },
           },
-          width: chartContainerRef.current.clientWidth,
-          height: isAdvanced ? chartContainerRef.current.clientHeight : 400,
+          width: chartContainerRef.current.clientWidth || 300,
+          height: isAdvanced ? (chartContainerRef.current.clientHeight || 600) : 400,
           rightPriceScale: {
             borderColor: '#1f2937',
           },
@@ -245,13 +247,16 @@ const StockChart: React.FC<StockChartProps> = ({ ticker, isAdvanced = false }) =
         chart.subscribeCrosshairMove((param) => {
             if (!tooltipRef.current || !chartContainerRef.current) return;
 
+            const containerWidth = chartContainerRef.current.clientWidth;
+            const containerHeight = chartContainerRef.current.clientHeight;
+
             if (
                 param.point === undefined ||
                 !param.time ||
                 param.point.x < 0 ||
-                param.point.x > chartContainerRef.current.clientWidth ||
+                param.point.x > containerWidth ||
                 param.point.y < 0 ||
-                param.point.y > chartContainerRef.current.clientHeight
+                param.point.y > containerHeight
             ) {
                 tooltipRef.current.style.display = 'none';
                 return;
