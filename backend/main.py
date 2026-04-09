@@ -109,21 +109,17 @@ def health_check():
     }
 
 
-# Enable CORS for frontend requests
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://finmin-swart.vercel.app",
-    "https://finmin-production.up.railway.app"
-]
+print("\n" + "="*50)
+print("FINMIN API BOOTING UP - VERSION v2.1 (CORS FIX)")
+print("="*50 + "\n")
 
+# Enable CORS for frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
 )
 
 # Optimization 3: GZip compression for all responses > 1KB
@@ -648,6 +644,7 @@ def market_scan() -> List[Dict[str, Any]]:
 
 @app.get("/api/backtest/{ticker}")
 def run_backtest(ticker: str, period: str = "1y"):
+    print(f"\n>>> [BACKTEST DEBUG] Request for {ticker} ({period})")
     try:
         result = backtest_single(ticker, period)
         if not result:
