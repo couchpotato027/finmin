@@ -175,10 +175,10 @@ const Dashboard: React.FC = () => {
         {/* Dashboard Body */}
         <div className="flex-1 overflow-auto p-4 md:p-8">
           <div className="flex flex-col mb-8">
-            <div className="flex flex-wrap items-baseline gap-3 mb-1">
-              <h1 className="text-4xl font-black tracking-tighter text-white uppercase">{ticker}</h1>
+            <div className="flex flex-wrap items-baseline gap-2 md:gap-3 mb-1">
+              <h1 className="text-2xl md:text-4xl font-black tracking-tighter text-white uppercase">{ticker}</h1>
               {priceInfo?.short_name && (
-                <span className="text-gray-500 text-sm font-bold tracking-widest uppercase opacity-50 truncate max-w-xs">{priceInfo.short_name}</span>
+                <span className="text-gray-400 text-[10px] md:text-sm font-bold tracking-widest uppercase opacity-50 truncate max-w-[120px] md:max-w-xs">{priceInfo.short_name}</span>
               )}
               <button
                 onClick={() => setShowAlertModal(true)}
@@ -214,12 +214,12 @@ const Dashboard: React.FC = () => {
             {priceInfo && typeof priceInfo.price === 'number' ? (
               <div className="flex items-center space-x-4 mt-1 animate-in fade-in slide-in-from-left-2 duration-700">
                 <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 rounded-full ${marketStatus.pulse ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-gray-500'} mt-1`} />
-                    <span className="text-3xl font-black text-white tracking-tighter">
+                    <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${marketStatus.pulse ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-gray-500'} mt-0.5 md:mt-1`} />
+                    <span className="text-xl md:text-3xl font-black text-white tracking-tighter">
                     {currency}{priceInfo.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                 </div>
-                <div className={`flex items-center space-x-1.5 font-bold text-sm h-fit mt-1 px-2.5 py-0.5 rounded-full ${isPositive ? 'text-emerald-400 bg-emerald-400/10' : 'text-rose-400 bg-rose-400/10'}`}>
+                <div className={`flex items-center space-x-1 font-bold text-[10px] md:text-sm h-fit mt-0.5 md:mt-1 px-2 py-0.5 rounded-full ${isPositive ? 'text-emerald-400 bg-emerald-400/10' : 'text-rose-400 bg-rose-400/10'}`}>
                   <span>{isPositive ? '+' : ''}{changeAmount.toFixed(2)}</span>
                   <span className="opacity-50">({isPositive ? '+' : ''}{priceInfo.change_pct.toFixed(2)}%)</span>
                 </div>

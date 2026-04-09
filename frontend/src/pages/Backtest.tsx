@@ -49,10 +49,12 @@ export default function Backtest() {
     setResult(null)
     try {
       const data = await fetchBacktest(ticker, period)
-      if (data.error) setError(data.error)
-      else setResult(data)
-    } catch {
-      setError("Failed to connect to backend")
+      if (data && data.error) setError(data.error)
+      else if (data) setResult(data)
+      else throw new Error("No data received")
+    } catch (err) {
+      console.error("Backtest error:", err)
+      setError("Failed to connect to backend. This could be a CORS issue or a timeout.")
     }
     setLoading(false)
   }
@@ -100,24 +102,24 @@ export default function Backtest() {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <header className="flex items-center justify-between px-8 py-4 bg-[#111827]/80 backdrop-blur-md border-b border-[#1f2937] sticky top-0 z-50">
-        <div className="flex items-center space-x-3">
-          <h2 className="text-xl font-bold text-white tracking-tight">Backtesting Engine</h2>
-          <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">Simulation</span>
+      <header className="flex items-center justify-between px-4 md:px-8 py-4 bg-[#111827]/80 backdrop-blur-md border-b border-[#1f2937] sticky top-0 z-50">
+        <div className="flex items-center space-x-2 md:space-x-3">
+          <h2 className="text-lg md:text-xl font-bold text-white tracking-tight">Backtesting Engine</h2>
+          <span className="px-1.5 md:px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[8px] md:text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">Simulation</span>
         </div>
 
         <div className="flex items-center space-x-4">
-           <div className="text-right mr-2 hidden md:block">
-              <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest leading-none mb-1">Strategy Mode</p>
-              <p className="text-[10px] font-bold text-blue-400/80 uppercase">FinMin Vectorized v1.2</p>
+           <div className="text-right mr-2 hidden sm:block">
+              <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-500 tracking-widest leading-none mb-1">Strategy Mode</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-blue-400/80 uppercase">FinMin Vectorized v1.2</p>
           </div>
         </div>
       </header>
 
       <div className="flex-1 overflow-auto p-4 md:p-8">
-        <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] shadow-lg rounded-xl p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div className="flex-1 flex flex-col md:flex-row items-end gap-6">
+        <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] shadow-lg rounded-xl p-4 md:p-6 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 md:gap-6">
+            <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-4 md:gap-6">
               <div className="w-full md:w-64 relative">
                 <label className="block text-[10px] font-black uppercase text-gray-500 tracking-[0.2em] mb-2 ml-1">Symbol Search</label>
                 <div className="relative">
@@ -260,7 +262,7 @@ export default function Backtest() {
               />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 md:gap-x-12 gap-y-6 px-1">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-12 px-1">
               <MiniStats label="Avg Gain" value={`+${result.avg_gain.toFixed(2)}%`} color="text-emerald-400/80" />
               <MiniStats label="Avg Loss" value={`${result.avg_loss.toFixed(2)}%`} color="text-rose-400/80" />
               <MiniStats label="Best Trade" value={`+${result.best_trade.toFixed(2)}%`} color="text-emerald-400" />

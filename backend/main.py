@@ -110,12 +110,20 @@ def health_check():
 
 
 # Enable CORS for frontend requests
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://finmin-swart.vercel.app",
+    "https://finmin-production.up.railway.app"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Optimization 3: GZip compression for all responses > 1KB

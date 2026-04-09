@@ -562,29 +562,29 @@ const MarketScanner: React.FC = () => {
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-            <header className="h-16 flex items-center justify-between px-8 bg-[#0b0f19]/50 backdrop-blur-sm border-b border-[#1f2937] z-10">
+            <header className="min-h-[64px] flex flex-col sm:flex-row items-center justify-between px-4 md:px-8 py-3 bg-[#0b0f19]/50 backdrop-blur-sm border-b border-[#1f2937] z-10 gap-3">
                     {/* Error Toast */}
                     {errorToast && (
-                        <div className="absolute top-20 left-1/2 -translate-x-1/2 px-4 py-2 bg-rose-500/10 text-rose-400 text-xs font-bold rounded-lg shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 z-[100] border border-rose-500/20 flex items-center gap-2">
+                        <div className="absolute top-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-rose-500/10 text-rose-400 text-xs font-bold rounded-lg shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 z-[100] border border-rose-500/20 flex items-center gap-2">
                             <AlertCircle size={14} />
                             {errorToast}
                         </div>
                     )}
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 w-full sm:w-auto">
                         <h1 className="text-xl font-bold text-white tracking-tight">Market Scanner</h1>
                         <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">Alpha v2.0</span>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 md:space-x-4 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
                         <select 
                             value={universe}
                             onChange={(e) => handleUniverseChange(e.target.value)}
-                            className="bg-[#1f2937] border border-[#374151] text-white text-[10px] font-black uppercase tracking-widest rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 px-3 outline-none cursor-pointer"
+                            className="bg-[#1f2937] border border-[#374151] text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 px-3 outline-none cursor-pointer shrink-0"
                         >
                             <option value="nifty50">Nifty 50</option>
                             <option value="nifty_next50">Nifty Next 50</option>
                             <option value="us_largecap">US Large Cap</option>
-                            <option value="watchlist">Watchlist Universe</option>
-                            <option value="custom">Custom Scan List</option>
+                            <option value="watchlist">Watchlist</option>
+                            <option value="custom">Custom</option>
                         </select>
                         <button
                             onClick={exportToCSV}

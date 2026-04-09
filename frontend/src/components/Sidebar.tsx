@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick, mobileOpen, setMobil
             }`}
           >
             <item.icon className={`h-5 w-5 ${location.pathname === item.path ? 'text-blue-500' : 'text-gray-400'}`} />
-            <span className="hidden md:inline">{item.name}</span>
+            <span>{item.name}</span>
           </Link>
         ))}
       </nav>
@@ -64,8 +64,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick, mobileOpen, setMobil
           onClick={onSettingsClick}
           className="w-full flex items-center px-4 py-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-[#1f2937]/50"
         >
-          <Settings className="w-5 h-5 md:mr-3" />
-          <span className="hidden md:inline">Settings</span>
+          <Settings className="w-5 h-5 mr-3" />
+          <span>Settings</span>
         </button>
       </div>
     </aside>
