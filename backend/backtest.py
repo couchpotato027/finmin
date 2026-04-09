@@ -223,10 +223,11 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
     """Run a back‑test for a single ticker.
     Returns a dictionary matching the specification in the request.
     """
-    # 1. Fetch data
-    data = yf.download(ticker, period=period, interval="1d", progress=False)
+    # 1. Fetch data with browser session to avoid blocks on Railway
+    session = get_yf_session()
+    data = yf.download(ticker, period=period, interval="1d", progress=False, session=session)
     if data.empty:
-        raise ValueError(f"No data returned for ticker {ticker}")
+        raise ValueError(f"No data returned for ticker {ticker}. Verify if the symbol is correct.")
     
     # Handle MultiIndex columns if present (common in recent yfinance versions)
     if isinstance(data.columns, pd.MultiIndex):
