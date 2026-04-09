@@ -111,7 +111,7 @@ export default function Backtest() {
         <div className="flex items-center space-x-4">
            <div className="text-right mr-2 hidden sm:block">
               <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-500 tracking-widest leading-none mb-1">Strategy Mode</p>
-              <p className="text-[9px] md:text-[10px] font-bold text-blue-400/80 uppercase">FinMin Vectorized v1.2</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-blue-400/80 uppercase">FinMin Vectorized v2.1</p>
           </div>
         </div>
       </header>
