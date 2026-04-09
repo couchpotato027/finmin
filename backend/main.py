@@ -4,7 +4,7 @@ import time
 from functools import wraps
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
-from yf_session import get_yf_session
+# backend/backtest.py
 yf.set_tz_cache_location("/tmp/yfinance_cache")
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware

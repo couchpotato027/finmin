@@ -1,4 +1,3 @@
-from yf_session import get_yf_session
 import feedparser
 import requests
 import os

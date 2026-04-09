@@ -1,4 +1,3 @@
-from yf_session import get_yf_session
 from cache_config import info_cache, history_cache
 import time
 from functools import wraps

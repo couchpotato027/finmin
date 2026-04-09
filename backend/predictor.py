@@ -1,4 +1,4 @@
-from yf_session import get_yf_session
+# backend/predictor.py
 from cache_config import history_cache
 import yfinance as yf
 from datetime import datetime, timedelta
