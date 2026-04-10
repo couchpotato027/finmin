@@ -90,7 +90,7 @@ const Analytics: React.FC = () => {
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden">
                 <header className="flex items-center justify-between px-8 py-4 bg-[#111827]/80 backdrop-blur-md border-b border-[#1f2937] sticky top-0 z-50">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 pl-12 md:pl-0">
                         <h1 className="text-xl font-bold text-white tracking-tight">Signal Analytics</h1>
                         <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">Performance</span>
                     </div>
@@ -178,7 +178,60 @@ const Analytics: React.FC = () => {
                             </div>
 
                             {/* SECTION 2: Signal History Table */}
-                            <div className="bg-[#111827] rounded-2xl border border-[#1f2937] overflow-hidden shadow-2xl">
+                            {/* Mobile signal cards */}
+                            <div className="md:hidden space-y-2 p-4">
+                                {history.map((signal, i) => (
+                                    <div key={i} className="bg-[#111827] border border-[#1f2937] rounded-xl p-3">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="font-bold text-sm text-white">
+                                                {signal.ticker}
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs px-2 py-0.5 rounded font-bold ${signal.signal === 'BUY' 
+                                                        ? 'bg-emerald-400/10 text-emerald-400'
+                                                        : 'bg-rose-400/10 text-rose-400'}`}>
+                                                    {signal.signal}
+                                                </span>
+                                                {signal.outcome && (
+                                                    <span className={`text-xs px-2 py-0.5 rounded font-bold ${signal.outcome === 'WIN'
+                                                            ? 'bg-emerald-400/10 text-emerald-400'
+                                                            : signal.outcome === 'LOSS'
+                                                            ? 'bg-rose-400/10 text-rose-400'
+                                                            : 'bg-gray-400/10 text-gray-400'}`}>
+                                                        {signal.outcome || 'PENDING'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                            <div>
+                                                <div className="text-gray-500">Entry</div>
+                                                <div className="text-gray-300">
+                                                    ₹{signal.price_at_signal?.toFixed(0)}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-gray-500">Date</div>
+                                                <div className="text-gray-300">
+                                                    {signal.timestamp?.slice(0,10)}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-gray-500">P&L</div>
+                                                <div className={signal.pct_change >= 0 
+                                                    ? 'text-emerald-400' : 'text-rose-400'}>
+                                                    {signal.pct_change 
+                                                        ? `${signal.pct_change > 0 ? '+' : ''}${signal.pct_change?.toFixed(2)}%`
+                                                        : '—'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop table — hidden on mobile */}
+                            <div className="hidden md:block bg-[#111827] rounded-xl border border-[#1f2937] overflow-hidden shadow-2xl">
                                 <div className="px-6 py-4 border-b border-[#1f2937] flex items-center justify-between">
                                     <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Signal History</h3>
                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Last 50 Entries</span>

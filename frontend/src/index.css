@@ -54,20 +54,26 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Prevent iOS Zoom on Input Focus */
-@media screen and (max-width: 768px) {
-  input, select, textarea {
+/* Prevent iOS zoom on input focus */
+@media (max-width: 768px) {
+  input, select, textarea, button {
     font-size: 16px !important;
   }
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Hide scrollbars on mobile */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { 
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+/* Smooth scrolling */
+* { scroll-behavior: smooth; }
+
+/* Better tap targets on mobile */
+@media (max-width: 768px) {
+  button { min-height: 44px; }
+  a { min-height: 44px; display: flex; 
+      align-items: center; }
 }

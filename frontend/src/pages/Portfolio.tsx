@@ -443,7 +443,7 @@ const Portfolio: React.FC = () => {
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden">
                 <header className="flex items-center justify-between px-8 py-4 bg-[#111827]/80 backdrop-blur-md border-b border-[#1f2937] sticky top-0 z-50">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 pl-12 md:pl-0">
                         <h1 className="text-xl font-bold text-white tracking-tight">Portfolio Manager</h1>
                         <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">Beta</span>
                     </div>

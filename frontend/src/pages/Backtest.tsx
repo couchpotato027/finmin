@@ -103,7 +103,7 @@ export default function Backtest() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <header className="flex items-center justify-between px-4 md:px-8 py-4 bg-[#111827]/80 backdrop-blur-md border-b border-[#1f2937] sticky top-0 z-50">
-        <div className="flex items-center space-x-2 md:space-x-3">
+        <div className="flex items-center space-x-2 md:space-x-3 pl-12 md:pl-0">
           <h2 className="text-lg md:text-xl font-bold text-white tracking-tight">Backtesting Engine</h2>
           <span className="px-1.5 md:px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[8px] md:text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">Simulation</span>
         </div>
@@ -211,9 +211,18 @@ export default function Backtest() {
         </div>
 
         {error && (
-           <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-rose-400 text-xs font-bold flex items-center mb-6 animate-in slide-in-from-top-2 duration-300">
-             <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" /> {error}
-           </div>
+          <div className="mx-4 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center font-bold text-sm mb-1">
+              <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+              Backtest unavailable
+            </div>
+            <div className="text-xs text-rose-400/70 ml-8">
+              {error.includes('Insufficient') || error.includes('data')
+                ? 'Not enough historical data. For Indian stocks (.NS), try running during market hours (9:15 AM - 3:30 PM IST) or use a longer period (1Y or 2Y).'
+                : error
+              }
+            </div>
+          </div>
         )}
 
         {loading && !result && (

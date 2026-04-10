@@ -570,7 +570,7 @@ const MarketScanner: React.FC = () => {
                             {errorToast}
                         </div>
                     )}
-                    <div className="flex items-center space-x-3 w-full sm:w-auto">
+                    <div className="flex items-center space-x-3 w-full sm:w-auto pl-12 md:pl-0">
                         <h1 className="text-xl font-bold text-white tracking-tight">Market Scanner</h1>
                         <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">Alpha v2.1</span>
                     </div>
@@ -755,9 +755,64 @@ const MarketScanner: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-[#111827] rounded-xl border border-[#1f2937] overflow-hidden shadow-2xl">
-                        <div className="overflow-x-auto -mx-4 md:mx-0">
-                            <table className="min-w-[900px] w-full text-left border-collapse">
+                    {/* Mobile card view */}
+                    <div className="md:hidden space-y-3 p-4">
+                        {sortedAndFilteredResults.map(stock => (
+                            <div 
+                                key={stock.ticker}
+                                onClick={() => navigate(`/?ticker=${stock.ticker}`, { 
+                                    state: { signal: stock, scanTimestamp: new Date().toISOString() } 
+                                })}
+                                className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 cursor-pointer active:bg-[#1f2937]"
+                            >
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div className="font-bold text-white text-sm">
+                                            {stock.ticker}
+                                        </div>
+                                        <div className={`text-xs mt-0.5 font-bold ${stock.change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                            {stock.change_pct >= 0 ? '+' : ''}
+                                            {stock.change_pct?.toFixed(2)}%
+                                        </div>
+                                    </div>
+                                    <div className={`px-3 py-1 rounded-lg text-xs font-bold border ${stock.signal === 'BUY' 
+                                            ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20'
+                                            : stock.signal === 'SELL'
+                                            ? 'bg-rose-400/10 text-rose-400 border-rose-400/20'
+                                            : 'bg-gray-400/10 text-gray-400 border-gray-400/20'
+                                        }`}>
+                                        {stock.signal} {stock.score > 0 ? '+' : ''}
+                                        {stock.score}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                    <div>
+                                        <div className="text-gray-500 mb-0.5">Price</div>
+                                        <div className="text-gray-200 font-mono">
+                                            {stock.ticker?.endsWith('.NS') ? '₹' : '$'}
+                                            {stock.price?.toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-gray-500 mb-0.5">RSI</div>
+                                        <div className={`font-bold ${stock.rsi < 35 ? 'text-emerald-400' : stock.rsi > 65 ? 'text-rose-400' : 'text-gray-200'}`}>
+                                            {stock.rsi?.toFixed(1)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-gray-500 mb-0.5">MACD</div>
+                                        <div className="text-gray-300 capitalize text-[10px] leading-tight">
+                                            {stock.macd_signal}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="hidden md:block bg-[#111827] rounded-xl border border-[#1f2937] overflow-hidden shadow-2xl">
+                        <div className="overflow-x-auto w-full">
+                            <table className="w-full min-w-[800px] text-left border-collapse">
                             <thead>
                                 <tr className="bg-[#1f2937]/50 border-b border-[#1f2937]">
                                     <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-black uppercase tracking-[0.2em] text-gray-500 w-12"></th>
