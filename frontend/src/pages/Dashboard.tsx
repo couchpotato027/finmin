@@ -173,8 +173,8 @@ const Dashboard: React.FC = () => {
         <TopBar ticker={ticker} setTicker={setTicker} />
 
         {/* Dashboard Body */}
-        <div className="flex-1 overflow-auto p-4 md:p-8">
-          <div className="flex flex-col mb-8">
+        <div className="flex-1 overflow-auto p-3 pt-14 md:pt-4 md:p-8">
+          <div className="flex flex-col mb-4 md:mb-8">
             <div className="flex flex-wrap items-baseline gap-2 md:gap-3 mb-1">
               <h1 className="text-2xl md:text-4xl font-black tracking-tighter text-white uppercase">{ticker}</h1>
               {priceInfo?.short_name && (
@@ -243,13 +243,13 @@ const Dashboard: React.FC = () => {
 
               {/* Indicator Panel Placholders for RSI and MACD */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] rounded-xl p-6 shadow-lg flex flex-col h-64 relative overflow-hidden">
+                 <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] rounded-xl p-6 shadow-lg flex flex-col h-48 md:h-64 relative overflow-hidden">
                     <h3 className="text-sm font-medium text-gray-400 mb-4 tracking-wider uppercase">Relative Strength Index (14)</h3>
                     <div className="flex-1 w-full">
                        <RSIChart ticker={ticker} />
                     </div>
                  </div>
-                 <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] rounded-xl p-6 shadow-lg flex flex-col h-64 relative overflow-hidden">
+                 <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] rounded-xl p-6 shadow-lg flex flex-col h-48 md:h-64 relative overflow-hidden">
                     <h3 className="text-sm font-medium text-gray-400 mb-4 tracking-wider uppercase">MACD (12, 26, 9)</h3>
                     <div className="flex-1 w-full">
                        <MACDChart ticker={ticker} />
@@ -257,9 +257,9 @@ const Dashboard: React.FC = () => {
                  </div>
               </div>
             </div>
-
+            
             {/* Right Column: AI Signals & News Feed */}
-            <div className="flex flex-col space-y-6 h-full">
+            <div className="flex flex-col space-y-6 h-full" style={{ minWidth: 0 }}>
               <div className="h-[380px] shrink-0">
                 <SignalPanel 
                   ticker={ticker} 
@@ -298,7 +298,8 @@ const Dashboard: React.FC = () => {
               border: '1px solid #1f2937',
               borderRadius: '16px',
               padding: '24px',
-              width: '340px',
+              width: '90vw',
+              maxWidth: '340px',
               zIndex: 101,
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
             }}

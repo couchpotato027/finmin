@@ -207,6 +207,8 @@ def _simulate_trades(df: pd.DataFrame, initial_capital: float = 100_000) -> Dict
         "total_return_pct": round(total_return_pct, 2),
         "total_trades": total_trades,
         "win_rate": round(win_rate, 2),
+        "wins": len(wins),
+        "losses": len(losses),
         "max_drawdown": round(max_drawdown, 2),
         "sharpe_ratio": round(sharpe_ratio, 2),
         "avg_gain": round(avg_gain, 2),
@@ -254,6 +256,8 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
         "total_return_pct": sim["total_return_pct"],
         "total_trades": sim["total_trades"],
         "win_rate": sim["win_rate"],
+        "wins": sim["wins"],
+        "losses": sim["losses"],
         "max_drawdown": sim["max_drawdown"],
         "sharpe_ratio": sim["sharpe_ratio"],
         "avg_gain": sim["avg_gain"],
@@ -286,7 +290,7 @@ def backtest_universe(tickers: List[str], period: str = "1y", initial_capital: f
     # Align dates and compute average equity curve
     all_eq = pd.concat(equity_frames, axis=1)
     avg_eq = all_eq.mean(axis=1)
-    avg_curve = [{"date": d.strftime("%Y-%m-%d"), "value": round(v, 2)} for d, v in avg_eq.iteritems()]
+    avg_curve = [{"date": d.strftime("%Y-%m-%d"), "value": round(v, 2)} for d, v in avg_eq.items()]
 
     # Compute aggregate metrics on the averaged equity curve
     equity_series = avg_eq
@@ -320,6 +324,8 @@ def backtest_universe(tickers: List[str], period: str = "1y", initial_capital: f
         "total_return_pct": round(total_return_pct, 2),
         "total_trades": total_trades,
         "win_rate": round(win_rate, 2),
+        "wins": len(wins),
+        "losses": len(losses),
         "max_drawdown": round(max_drawdown, 2),
         "sharpe_ratio": round(sharpe_ratio, 2),
         "avg_gain": round(avg_gain, 2),

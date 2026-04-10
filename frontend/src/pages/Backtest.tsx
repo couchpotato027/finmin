@@ -117,9 +117,9 @@ export default function Backtest() {
       </header>
 
       <div className="flex-1 overflow-auto p-4 md:p-8">
-        <div className="bg-[#111827]/80 backdrop-blur-md border border-[#1f2937] shadow-lg rounded-xl p-4 md:p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 md:gap-6">
-            <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-4 md:gap-6">
+        <div className="bg-[#111827] p-4 rounded-xl border border-[#1f2937] mb-8 shadow-lg">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex flex-wrap items-end gap-3">
               <div className="w-full md:w-64 relative">
                 <label className="block text-[10px] font-black uppercase text-gray-500 tracking-[0.2em] mb-2 ml-1">Symbol Search</label>
                 <div className="relative">
@@ -161,7 +161,7 @@ export default function Backtest() {
                 )}
               </div>
 
-              <div className="w-full md:auto">
+              <div className="w-full sm:w-auto">
                 <label className="block text-[10px] font-black uppercase text-gray-500 tracking-[0.2em] mb-2 ml-1">Time Horizon</label>
                 <div className="flex bg-[#0b0f19] border border-[#1f2937] rounded-xl p-1">
                   {PERIODS.map(p => (
@@ -183,7 +183,7 @@ export default function Backtest() {
               <button
                 onClick={runBacktest}
                 disabled={loading}
-                className={`flex items-center justify-center space-x-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border shadow-lg ${
+                className={`flex items-center justify-center space-x-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border shadow-lg w-full sm:w-auto ${
                   loading 
                   ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 cursor-not-allowed' 
                   : 'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent shadow shadow-emerald-500/20 active:scale-95'
@@ -231,7 +231,7 @@ export default function Backtest() {
 
         {result && (
           <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
               <MetricCard 
                 label="Total Return" 
                 value={`${c(result.total_return_pct)}%`}
@@ -344,8 +344,8 @@ export default function Backtest() {
                 )}
 
                 {activeTab === 'trades' && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <table className="w-full text-left border-collapse">
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-auto">
+                    <table className="min-w-[700px] w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[#1f2937]">
                           {['Entry Date', 'Exit Date', 'Entry Price', 'Exit Price', 'P&L %', 'Outcome'].map(h => (

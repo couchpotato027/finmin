@@ -454,7 +454,7 @@ const MarketScanner: React.FC = () => {
                 })}
                 className="hover:bg-white/[0.03] cursor-pointer transition-all group border-l-2 border-transparent hover:border-blue-500"
             >
-                <td className="px-6 py-5">
+                <td className="px-3 md:px-6 py-3 md:py-5">
                     <div className="flex items-center space-x-2">
                         <button 
                             onClick={(e) => toggleWatchlist(e, item.ticker)}
@@ -480,7 +480,7 @@ const MarketScanner: React.FC = () => {
                         )}
                     </div>
                 </td>
-                <td className="px-6 py-5">
+                <td className="px-3 md:px-6 py-3 md:py-5">
                     <div className="flex items-center space-x-3">
                         <div className="font-black text-white text-sm group-hover:text-blue-400 transition-colors">
                             {item.ticker}
@@ -492,17 +492,17 @@ const MarketScanner: React.FC = () => {
                         )}
                     </div>
                 </td>
-                <td className="px-6 py-5 text-right font-mono text-sm text-gray-300">
+                <td className="px-3 md:px-6 py-3 md:py-5 text-right font-mono text-sm text-gray-300">
                     {item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
-                <td className={`px-6 py-5 text-right font-mono text-sm font-bold ${
+                <td className={`px-3 md:px-6 py-3 md:py-5 text-right font-mono text-sm font-bold ${
                     item.change_pct > 0 ? 'text-emerald-400' : 
                     item.change_pct < 0 ? 'text-rose-400' : 
                     'text-gray-500'
                 }`}>
                     {item.change_pct > 0 ? '+' : ''}{item.change_pct.toFixed(2)}%
                 </td>
-                <td className="px-6 py-5 text-center">
+                <td className="px-3 md:px-6 py-3 md:py-5 text-center">
                     <span className={`text-sm font-bold font-mono ${
                         item.rsi < 40 ? 'text-emerald-400' : 
                         item.rsi > 60 ? 'text-rose-400' : 
@@ -511,7 +511,7 @@ const MarketScanner: React.FC = () => {
                         {item.rsi.toFixed(1)}
                     </span>
                 </td>
-                <td className="px-6 py-5">
+                <td className="px-3 md:px-6 py-3 md:py-5">
                     <div className="flex items-center justify-center space-x-2">
                         {getMacdIcon(item.macd_signal)}
                         <span className={`text-[10px] uppercase font-black ${
@@ -525,10 +525,10 @@ const MarketScanner: React.FC = () => {
                         </span>
                     </div>
                 </td>
-                <td className="px-6 py-5 text-center">
+                <td className="px-3 md:px-6 py-3 md:py-5 text-center">
                     {getVolumePulseDisplay(item.volume_pulse, item.volume_ratio)}
                 </td>
-                <td className="px-6 py-5">
+                <td className="px-3 md:px-6 py-3 md:py-5">
                     <div className="flex items-center space-x-3">
                         <div className="w-[64px] h-2 bg-gray-800 rounded-full overflow-hidden">
                             <div 
@@ -548,7 +548,7 @@ const MarketScanner: React.FC = () => {
                         </span>
                     </div>
                 </td>
-                <td className="px-6 py-5 text-right">
+                <td className="px-3 md:px-6 py-3 md:py-5 text-right">
                     <div className={`inline-flex items-center px-4 py-2 rounded-xl border ${getSignalColor(item.signal, item.score)} shadow-lg transition-all`}>
                         <span className="text-xs font-black tracking-tighter mr-2 uppercase">{item.signal}</span>
                         <span className="text-xs font-black opacity-90">
@@ -603,7 +603,7 @@ const MarketScanner: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-auto p-4 md:p-8">
+                <div className="flex-1 overflow-auto p-4 pt-0 md:p-8">
                     <div className="mb-8 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
                         <div className="flex-1 min-w-[300px]">
                             <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Technical Opportunity Radar</h2>
@@ -756,33 +756,33 @@ const MarketScanner: React.FC = () => {
                     </div>
 
                     <div className="bg-[#111827] rounded-xl border border-[#1f2937] overflow-hidden shadow-2xl">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-[800px] w-full text-left border-collapse">
+                        <div className="overflow-x-auto -mx-4 md:mx-0">
+                            <table className="min-w-[900px] w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-[#1f2937]/50 border-b border-[#1f2937]">
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-[0.2em] text-gray-500 w-12"></th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('ticker')}>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-black uppercase tracking-[0.2em] text-gray-500 w-12"></th>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('ticker')}>
                                         <div className="flex items-center">TICKER {renderSortArrow('ticker')}</div>
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('price')}>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-right text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('price')}>
                                         <div className="flex items-center justify-end">PRICE {renderSortArrow('price')}</div>
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('change_pct')}>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-right text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('change_pct')}>
                                         <div className="flex items-center justify-end">% TODAY {renderSortArrow('change_pct')}</div>
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('rsi')}>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('rsi')}>
                                         <div className="flex items-center justify-center">RSI (14) {renderSortArrow('rsi')}</div>
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('macd_signal')}>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('macd_signal')}>
                                         <div className="flex items-center justify-center">MACD {renderSortArrow('macd_signal')}</div>
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('volume_ratio')}>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('volume_ratio')}>
                                         <div className="flex items-center justify-center">VOLUME PULSE {renderSortArrow('volume_ratio')}</div>
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('score')}>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 cursor-pointer group" onClick={() => handleSort('score')}>
                                         <div className="flex items-center justify-center">SCORE {renderSortArrow('score')}</div>
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-[0.2em] text-gray-500">MASTER SIGNAL</th>
+                                    <th className="px-3 md:px-6 py-3 md:py-4 text-right text-xs font-black uppercase tracking-[0.2em] text-gray-500">MASTER SIGNAL</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#1f2937]">

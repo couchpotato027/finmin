@@ -147,7 +147,7 @@ const Analytics: React.FC = () => {
                     ) : (
                         <div className="space-y-8 animate-in fade-in duration-500">
                             {/* SECTION 1: Summary Cards */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
                                 <AnalyticsCard 
                                     label="Total Signals" 
                                     value={stats?.total ?? 0} 
@@ -184,7 +184,7 @@ const Analytics: React.FC = () => {
                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Last 50 Entries</span>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
+                                    <table className="min-w-[800px] w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-[#1f2937]/30">
                                                 <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-gray-500">Ticker</th>

@@ -167,7 +167,7 @@ const TopBar: React.FC<TopBarProps> = ({ ticker, setTicker }) => {
 
   return (
     <header className="h-16 bg-[#0b0f19]/80 backdrop-blur-md border-b border-[#1f2937] flex items-center justify-between px-4 md:px-8 pl-14 md:pl-8 z-50 sticky top-0 gap-4">
-      <div className="relative flex-1 max-w-md" ref={dropdownRef}>
+      <div className="relative flex-1 max-w-md w-full sm:w-auto" ref={dropdownRef}>
         <form onSubmit={handleSubmit} className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input

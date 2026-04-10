@@ -47,6 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSettingsClick, mobileOpen, setMobil
           <Link
             key={item.name}
             to={item.path}
+            onClick={() => setMobileOpen(false)}
             className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               location.pathname === item.path
                 ? 'bg-blue-600/10 text-blue-500'

@@ -473,7 +473,7 @@ const Portfolio: React.FC = () => {
 
                 <div className="flex-1 overflow-auto p-4 md:p-8">
                     {/* SECTION 1: Summary Cards */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
                         <SummaryCard 
                             label="Total Invested" 
                             value={`₹${(stats.totalInvested || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
@@ -504,8 +504,8 @@ const Portfolio: React.FC = () => {
 
                     {/* SECTION 3: Add Holding Form */}
                     <div className="bg-[#111827] p-4 rounded-xl border border-[#1f2937] mb-8 shadow-lg">
-                        <form onSubmit={handleAddHolding} className="flex flex-col md:flex-row items-end gap-3">
-                            <div className="w-full md:w-32">
+                        <form onSubmit={handleAddHolding} className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+                            <div className="w-full sm:w-32">
                                 <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1.5 ml-1">Exchange</label>
                                 <div className="flex bg-[#0b0f19] border border-[#1f2937] rounded-xl p-1">
                                     <button
@@ -577,7 +577,7 @@ const Portfolio: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-                            <div className="w-full md:w-28">
+                            <div className="w-full sm:w-28">
                                 <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1.5 ml-1">Quantity</label>
                                 <input 
                                     type="number"
@@ -587,7 +587,7 @@ const Portfolio: React.FC = () => {
                                     className="w-full bg-[#0b0f19] border border-[#1f2937] text-white text-sm rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none transition-all font-mono"
                                 />
                             </div>
-                            <div className="w-full md:w-44">
+                            <div className="w-full sm:w-44">
                                 <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1.5 ml-1">Buy Price</label>
                                 <div className="space-y-1">
                                     <input 
@@ -643,7 +643,7 @@ const Portfolio: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-full md:w-40">
+                            <div className="w-full sm:w-40">
                                 <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1.5 ml-1">Date Bought</label>
                                 <input 
                                     type="date"
@@ -664,7 +664,8 @@ const Portfolio: React.FC = () => {
 
                     {/* SECTION 2: Holdings Table */}
                     <div className="bg-[#111827] rounded-xl border border-[#1f2937] overflow-hidden shadow-2xl">
-                        <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-[1000px] w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-[#1f2937]/50 border-b border-[#1f2937]">
                                     <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-gray-500">Asset</th>
