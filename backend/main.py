@@ -642,22 +642,44 @@ def market_scan() -> List[Dict[str, Any]]:
             
     return results
 
-@app.get("/api/v2/backtest")
-def run_backtest_v2(ticker: str, period: str = "1y"):
-    print(f"\n>>> [BACKTEST V2] Request for {ticker} ({period})")
-    try:
-        # ticker like TCS.NS works fine as a query param
-        result = backtest_single(ticker, period)
-        if not result:
-            return {"error": "Backtest failed", "ticker": ticker}
-        return result
-    except Exception as e:
-        print(f"!!! Error in backtest v2: {str(e)} !!!")
-        return {"error": str(e), "ticker": ticker}
+from fastapi.responses import JSONResponse
 
 @app.get("/api/backtest/{ticker}")
-def run_backtest_v1(ticker: str, period: str = "1y"):
-    return run_backtest_v2(ticker, period)
+@app.get("/api/v2/backtest/{ticker}")
+@app.get("/v2/backtest/{ticker}")
+async def run_backtest_endpoint(ticker: str, period: str = "1y"):
+    try:
+        # ticker like TCS.NS works fine as a path param
+        # Use asyncio.to_thread since backtest_single is synchronous
+        result = await asyncio.to_thread(backtest_single, ticker, period)
+        if not result:
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "error": "Backtest failed",
+                    "ticker": ticker,
+                    "message": "Insufficient historical data"
+                }
+            )
+        if "error" in result:
+            return JSONResponse(
+                status_code=422,
+                content=result
+            )
+        return result
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": str(e),
+                "ticker": ticker
+            }
+        )
+
+@app.get("/api/v2/backtest")
+def run_backtest_query_param(ticker: str, period: str = "1y"):
+    # Legacy support for query param
+    return run_backtest_endpoint(ticker, period)
 
 @app.post("/api/backtest/universe")
 def run_universe_backtest(tickers: list[str], period: str = "1y"):

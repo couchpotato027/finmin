@@ -226,10 +226,36 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
     Returns a dictionary matching the specification in the request.
     """
     # 1. Fetch data
-    # Removed requests session as latest yfinance requires curl_cffi or internal management
-    data = yf.download(ticker, period=period, interval="1d", progress=False)
+    # Use recommended parameters for night/closed market stability
+    data = yf.download(
+        ticker, 
+        period=period, 
+        interval="1d", 
+        auto_adjust=True, 
+        actions=False, 
+        progress=False
+    )
+    
+    # If empty or last date is stale, try with prepost (helpful for .NS stocks at night)
     if data.empty:
-        raise ValueError(f"No data returned for ticker {ticker}. Verify if the symbol is correct.")
+        data = yf.download(
+            ticker, 
+            period=period, 
+            interval="1d", 
+            prepost=True, 
+            actions=False, 
+            progress=False
+        )
+
+    # Drop any rows with NaN close prices
+    data = data.dropna(subset=['Close'])
+
+    if len(data) < 30:
+        return {
+            "error": f"Insufficient data for {ticker}",
+            "ticker": ticker,
+            "message": "Try during market hours or use a longer period"
+        }
     
     # Handle MultiIndex columns if present (common in recent yfinance versions)
     if isinstance(data.columns, pd.MultiIndex):
