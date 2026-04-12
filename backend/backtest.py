@@ -16,6 +16,15 @@ from typing import List, Dict, Any
 import numpy as np
 import pandas as pd
 import yfinance as yf
+import requests
+
+# Set up a session with a browser-like User-Agent to bypass bot detection on cloud IPs
+session = requests.Session()
+session.headers.update({
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Accept-Language': 'en-US,en;q=0.9',
+})
 
 # ---------------------------------------------------------------------------
 # Helper: Indicator calculations (vectorised)
@@ -234,7 +243,8 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
             interval="1d", 
             auto_adjust=True, 
             actions=False, 
-            progress=False
+            progress=False,
+            session=session
         )
         
         # If empty or last date is stale, try with prepost (helpful for .NS stocks at night)
@@ -245,7 +255,8 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
                 interval="1d", 
                 prepost=True, 
                 actions=False, 
-                progress=False
+                progress=False,
+                session=session
             )
 
         # Drop any rows with NaN close prices
@@ -277,6 +288,18 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
                     if str(c).lower() == col.lower():
                         data = data.rename(columns={c: col})
                         break
+        
+        # Diagnostic check for missing columns
+        missing = [c for c in standard_cols if c not in data.columns]
+        if missing:
+             return {
+                 "error": f"Missing OHLCV columns for {ticker}",
+                 "ticker": ticker,
+                 "period": period,
+                 "columns_found": data.columns.tolist(),
+                 "missing_columns": missing,
+                 "message": "Data format mismatch or bot protection encountered"
+             }
         
         data.index = pd.to_datetime(data.index).normalize()
 
