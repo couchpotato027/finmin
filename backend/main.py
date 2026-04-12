@@ -677,9 +677,9 @@ async def run_backtest_endpoint(ticker: str, period: str = "1y"):
         )
 
 @app.get("/api/v2/backtest")
-def run_backtest_query_param(ticker: str, period: str = "1y"):
+async def run_backtest_query_param(ticker: str, period: str = "1y"):
     # Legacy support for query param
-    return run_backtest_endpoint(ticker, period)
+    return await run_backtest_endpoint(ticker, period)
 
 @app.post("/api/backtest/universe")
 def run_universe_backtest(tickers: list[str], period: str = "1y"):

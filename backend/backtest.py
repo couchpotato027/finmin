@@ -225,75 +225,97 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
     """Run a back‑test for a single ticker.
     Returns a dictionary matching the specification in the request.
     """
-    # 1. Fetch data
-    # Use recommended parameters for night/closed market stability
-    data = yf.download(
-        ticker, 
-        period=period, 
-        interval="1d", 
-        auto_adjust=True, 
-        actions=False, 
-        progress=False
-    )
-    
-    # If empty or last date is stale, try with prepost (helpful for .NS stocks at night)
-    if data.empty:
+    try:
+        # 1. Fetch data
+        # Use recommended parameters for night/closed market stability
         data = yf.download(
             ticker, 
             period=period, 
             interval="1d", 
-            prepost=True, 
+            auto_adjust=True, 
             actions=False, 
             progress=False
         )
+        
+        # If empty or last date is stale, try with prepost (helpful for .NS stocks at night)
+        if data.empty:
+            data = yf.download(
+                ticker, 
+                period=period, 
+                interval="1d", 
+                prepost=True, 
+                actions=False, 
+                progress=False
+            )
 
-    # Drop any rows with NaN close prices
-    data = data.dropna(subset=['Close'])
+        # Drop any rows with NaN close prices
+        data = data.dropna(subset=['Close'])
 
-    if len(data) < 30:
+        if len(data) < 30:
+            return {
+                "error": f"Insufficient data for {ticker}",
+                "ticker": ticker,
+                "period": period,
+                "message": "Try during market hours or use a longer period"
+            }
+        
+        # Handle MultiIndex columns if present (common in recent yfinance versions)
+        if isinstance(data.columns, pd.MultiIndex):
+            # Try to find which level contains standard columns
+            if 'Close' in data.columns.get_level_values(0):
+                data.columns = data.columns.get_level_values(0)
+            else:
+                data.columns = data.columns.get_level_values(1)
+
+        # Basic sanitization of column names
+        data.columns = [str(c) for c in data.columns]
+        standard_cols = ["Open", "High", "Low", "Close", "Volume"]
+        for col in standard_cols:
+            if col not in data.columns:
+                # Case-insensitive fallback
+                for c in data.columns:
+                    if str(c).lower() == col.lower():
+                        data = data.rename(columns={c: col})
+                        break
+        
+        data.index = pd.to_datetime(data.index).normalize()
+
+        # 2. Indicators
+        data = _calculate_indicators(data)
+
+        # 3. Signal scoring
+        data = _generate_signal_score(data)
+
+        # 4. Trade simulation & metrics
+        sim = _simulate_trades(data, initial_capital=initial_capital)
+
+        # Assemble final result
         return {
-            "error": f"Insufficient data for {ticker}",
             "ticker": ticker,
-            "message": "Try during market hours or use a longer period"
+            "period": period,
+            "initial_capital": initial_capital,
+            "final_capital": sim["final_capital"],
+            "total_return_pct": sim["total_return_pct"],
+            "total_trades": sim["total_trades"],
+            "win_rate": sim["win_rate"],
+            "wins": sim["wins"],
+            "losses": sim["losses"],
+            "max_drawdown": sim["max_drawdown"],
+            "sharpe_ratio": sim["sharpe_ratio"],
+            "avg_gain": sim["avg_gain"],
+            "avg_loss": sim["avg_loss"],
+            "best_trade": sim["best_trade"],
+            "worst_trade": sim["worst_trade"],
+            "equity_curve": sim["equity_curve"],
+            "trades": sim["trades"]
         }
-    
-    # Handle MultiIndex columns if present (common in recent yfinance versions)
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
-
-    data = data.rename(columns={"Open": "Open", "High": "High", "Low": "Low", "Close": "Close", "Volume": "Volume"})
-    data.index = pd.to_datetime(data.index).normalize()
-
-    # 2. Indicators
-    data = _calculate_indicators(data)
-
-    # 3. Signal scoring
-    data = _generate_signal_score(data)
-
-    # 4. Trade simulation & metrics
-    sim = _simulate_trades(data, initial_capital=initial_capital)
-
-    # Assemble final result
-    result = {
-        "ticker": ticker,
-        "period": period,
-        "initial_capital": initial_capital,
-        "final_capital": sim["final_capital"],
-        "total_return_pct": sim["total_return_pct"],
-        "total_trades": sim["total_trades"],
-        "win_rate": sim["win_rate"],
-        "wins": sim["wins"],
-        "losses": sim["losses"],
-        "max_drawdown": sim["max_drawdown"],
-        "sharpe_ratio": sim["sharpe_ratio"],
-        "avg_gain": sim["avg_gain"],
-        "avg_loss": sim["avg_loss"],
-        "best_trade": sim["best_trade"],
-        "worst_trade": sim["worst_trade"],
-        "equity_curve": sim["equity_curve"],
-        "trades": sim["trades"]
-    }
-    return result
+    except Exception as e:
+        return {
+            "error": str(e),
+            "ticker": ticker,
+            "period": period,
+            "message": "Internal processing error during backtest"
+        }
 
 # ---------------------------------------------------------------------------
 # Multi‑ticker backtest
