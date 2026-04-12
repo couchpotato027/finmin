@@ -235,44 +235,40 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
     Returns a dictionary matching the specification in the request.
     """
     try:
-        # 1. Fetch data
-        # Use recommended parameters for night/closed market stability
-        data = yf.download(
-            ticker, 
+        # Use Ticker object instead of download for better stability in cloud environments
+        stock = yf.Ticker(ticker)
+        data = stock.history(
             period=period, 
             interval="1d", 
             auto_adjust=True, 
-            actions=False, 
-            progress=False,
-            session=session
+            actions=False
         )
         
-        # If empty or last date is stale, try with prepost (helpful for .NS stocks at night)
-        if data.empty:
-            data = yf.download(
-                ticker, 
-                period=period, 
-                interval="1d", 
-                prepost=True, 
-                actions=False, 
-                progress=False,
-                session=session
-            )
+        # If empty, try a slightly longer period if user requested 1mo/1wk
+        # (Likely not the case for 1y, but good for stability)
+        if data.empty and period in ["1wk", "1mo", "1d"]:
+             data = stock.history(period="1y", interval="1d", auto_adjust=True)
 
         # Drop any rows with NaN close prices
         data = data.dropna(subset=['Close'])
 
+        # Detailed diagnostic check for 422 tracking
         if len(data) < 30:
-            return {
+            diag = {
                 "error": f"Insufficient data for {ticker}",
                 "ticker": ticker,
                 "period": period,
-                "message": "Try during market hours or use a longer period"
+                "df_shape": list(data.shape),
+                "columns_found": data.columns.tolist(),
+                "message": "Try during market hours or use a longer period (1Y/2Y)"
             }
+            if not data.empty:
+                diag["first_date"] = str(data.index[0])
+                diag["last_date"] = str(data.index[-1])
+            return diag
         
-        # Handle MultiIndex columns if present (common in recent yfinance versions)
+        # Handle MultiIndex columns if present
         if isinstance(data.columns, pd.MultiIndex):
-            # Try to find which level contains standard columns
             if 'Close' in data.columns.get_level_values(0):
                 data.columns = data.columns.get_level_values(0)
             else:
@@ -283,22 +279,20 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
         standard_cols = ["Open", "High", "Low", "Close", "Volume"]
         for col in standard_cols:
             if col not in data.columns:
-                # Case-insensitive fallback
                 for c in data.columns:
                     if str(c).lower() == col.lower():
                         data = data.rename(columns={c: col})
                         break
         
-        # Diagnostic check for missing columns
+        # Final column diagnostic check before processing
         missing = [c for c in standard_cols if c not in data.columns]
         if missing:
              return {
-                 "error": f"Missing OHLCV columns for {ticker}",
+                 "error": f"Data format mismatch for {ticker}",
                  "ticker": ticker,
-                 "period": period,
                  "columns_found": data.columns.tolist(),
                  "missing_columns": missing,
-                 "message": "Data format mismatch or bot protection encountered"
+                 "message": "Bot protection or API change detected"
              }
         
         data.index = pd.to_datetime(data.index).normalize()
@@ -333,11 +327,13 @@ def backtest_single(ticker: str, period: str = "1y", initial_capital: float = 10
             "trades": sim["trades"]
         }
     except Exception as e:
+        import traceback
         return {
             "error": str(e),
             "ticker": ticker,
             "period": period,
-            "message": "Internal processing error during backtest"
+            "trace": traceback.format_exc() if os.environ.get("DEBUG") else "Internal error",
+            "message": "Internal processing error during backtest logic"
         }
 
 # ---------------------------------------------------------------------------
